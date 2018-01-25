@@ -12,6 +12,7 @@ temp_file = "captcha.png"
 
 def process_captcha():
     image = cv2.imread(temp_file, 0)
+    
     cv2.imwrite(temp_file, process(image))
 
 def process(image):
@@ -34,19 +35,19 @@ def sanitize(s):
     return "".join(l)
 
 def read_captcha(url):
+    download = os.path.join("captcha/downloads", str(int(time.time())) + ".png")
     # fetch image from url and save it to file
     response = requests.get(url)
     image = Image.open(BytesIO(response.content))
     image.save(temp_file)
+    image.save(download)    
 
     process_captcha() # image preprocessing with opencv
     
     # ocr with tesseract
     text = pytesseract.image_to_string(Image.open(temp_file))
-
-    # clean up - rename and store
-    new_file = os.path.join("captcha/downloads", str(int(time.time())))
-    os.rename(temp_file, new_file)
+    
+    os.remove(temp_file)
     return sanitize(text) 
 
 if __name__ == "__main__":
