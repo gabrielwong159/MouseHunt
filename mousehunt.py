@@ -1,8 +1,10 @@
 import json
 import time
+import datetime
 import random
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.remote_connection import LOGGER
 from cv import read_captcha
 
@@ -18,12 +20,14 @@ iframe_id = "iframe_canvas"
 captcha_image_class_name = "mousehuntPage-puzzle-form-captcha-image"
 captcha_input_class_name = "mousehuntPage-puzzle-form-code"
 captcha_button_class_name = "mousehuntPage-puzzle-form-code-button"
+new_code_class_name = "mousehuntPage-puzzle-form-newCode"
 journal_entry_id = "journallatestentry"
 
 def wait_for_next_horn():
     for i in range(15):
         time.sleep(60 + random.randint(0, 15))
-        print(i+1)
+        print(i+1, end=" ", flush=True)
+    print()
 
 def sound_the_horn():
     driver.get(horn_url)
@@ -33,30 +37,56 @@ def check_captcha():
     try:
         iframe = driver.find_element_by_id(iframe_id)
         driver.switch_to_frame(iframe)
-        
+
         captcha = driver.find_element_by_class_name(captcha_image_class_name)
         image_url = captcha.value_of_css_property("background-image")[5:-2] # url("____")
         text = read_captcha(image_url)
+        if (len(text) != 5):
+            raise InvalidCaptchaException()
 
         driver.find_element_by_class_name(captcha_input_class_name).send_keys(text)
         driver.find_element_by_class_name(captcha_button_class_name).click()
         driver.switch_to_default_content()
 
-        print("Captcha at:", datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
-
+        print("Captcha at:", datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"), "-", text)
         sound_the_horn()
     except NoSuchElementException:
         print("Buwuu")
         print(get_latest_entry())
+    except WebDriverException as e:
+        # sometimes encounter the issue where the captcha button was an unclickable element
+        driver.get(game_url)
+        check_captcha()
+    except InvalidCaptchaException: # enter 
+        change_captcha()
+        check_captcha()
 
-def get_latest_entry():
+def change_captcha():
+    driver.get(game_url)
     iframe = driver.find_element_by_id(iframe_id)
     driver.switch_to_frame(iframe)
-
-    text = driver.find_element_by_id(journal_entry_id).text
     
+    new_captcha = driver.find_element_by_class_name(new_code_class_name)
+    new_captcha.find_element_by_tag_name("a").click()
+
     driver.switch_to_default_content()
-    return text
+    driver.get(game_url)    
+
+def get_latest_entry():
+    # switch to iframe if available - not available when captcha
+    try:
+        iframe = driver.find_element_by_id(iframe_id)
+        driver.switch_to_frame(iframe)
+    except NoSuchElementException:
+        pass
+
+    # avoid halting the entire process when no journal entry is found
+    try:
+        text = driver.find_element_by_id(journal_entry_id).text
+        driver.switch_to_default_content()
+        return text
+    except NoSuchElementException:
+        return "Could not find journal entry"
 
 if __name__ == "__main__":
     options = webdriver.ChromeOptions()
@@ -75,8 +105,7 @@ if __name__ == "__main__":
     # await horning
     driver.get(game_url)
     print("Ready")
-    #sound_the_horn()
 
     while True:
-        wait_for_next_horn()
         sound_the_horn()
+        wait_for_next_horn()
