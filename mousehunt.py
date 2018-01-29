@@ -33,8 +33,10 @@ def sound_the_horn():
     driver.get(horn_url)
     check_captcha()
 
-def check_captcha():
+def check_captcha(n=0):
     try:
+        if n > 0: change_captcha() # if previously failed, change captcha first
+        
         iframe = driver.find_element_by_id(iframe_id)
         driver.switch_to_frame(iframe)
 
@@ -56,10 +58,9 @@ def check_captcha():
     except WebDriverException as e:
         # sometimes encounter the issue where the captcha button was an unclickable element
         driver.get(game_url)
-        check_captcha()
+        check_captcha(n+1)
     except InvalidCaptchaException: # enter 
-        change_captcha()
-        check_captcha()
+        check_captcha(n+1)
 
 def change_captcha():
     driver.get(game_url)
