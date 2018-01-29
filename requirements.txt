@@ -1,0 +1,6 @@
+numpy>=1.13.3
+PIL>=4.2.1
+pytesseract>=0.1.8
+python-dotenv>=0.7.1
+requests>=2.13.0
+selenium>=3.4.3

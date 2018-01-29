@@ -1,11 +1,13 @@
+import datetime
 import json
+import os
 import random
 import time
-import datetime
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.remote_connection import LOGGER
+from dotenv import find_dotenv, load_dotenv
 from cv import read_captcha
 from exception import InvalidCaptchaException
 
@@ -29,19 +31,17 @@ class MouseHuntDriver(object):
             
         driver = webdriver.Chrome(chrome_options=options)
         driver.delete_all_cookies()
-
         self._driver = driver
+
+        load_dotenv(find_dotenv())
+        self._email, self._password = os.environ.get("email"), os.environ.get("password")
 
     def login(self):
         driver = self._driver
-        
-        with open("facebook_credentials.json", "r") as f:
-            credentials = json.loads(f.read())
-            email, password = credentials["email"], credentials["password"]
-            
+
         driver.get(self.login_url)
-        driver.find_element_by_id("email").send_keys(email)
-        driver.find_element_by_id("pass").send_keys(password)
+        driver.find_element_by_id("email").send_keys(self._email)
+        driver.find_element_by_id("pass").send_keys(self._password)
         driver.find_element_by_id("loginbutton").click()
         print("Logged in")
 
