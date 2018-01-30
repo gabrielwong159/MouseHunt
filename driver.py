@@ -119,5 +119,5 @@ class MouseHuntDriver(object):
         except NoSuchElementException:
             return "Could not find journal entry"
 
-    def quit(self):
-        self._driver.quit()
+    def close(self):
+        self._driver.close()
