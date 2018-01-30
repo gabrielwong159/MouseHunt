@@ -40,6 +40,9 @@ class MouseHuntDriver(object):
         driver.find_element_by_id("loginbutton").click()
         print("Logged in")
 
+        # allow time for the page to load
+        time.sleep(5)
+
         driver.get(self.game_url)
         print("Ready")
 
@@ -114,5 +117,5 @@ class MouseHuntDriver(object):
         except NoSuchElementException:
             return "Could not find journal entry"
 
-    def quit(self):
-        self._driver.quit()
+    def close(self):
+        self._driver.close()

@@ -35,12 +35,10 @@ def sanitize(s):
     return "".join(l)
 
 def read_captcha(url):
-    download = os.path.join("captcha/downloads", str(int(time.time())) + ".png")
     # fetch image from url and save it to file
     response = requests.get(url)
     image = Image.open(BytesIO(response.content))
     image.save(temp_file)
-    image.save(download)    
 
     process_captcha() # image preprocessing with opencv
     
