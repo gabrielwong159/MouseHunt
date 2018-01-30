@@ -23,13 +23,8 @@ class MouseHuntDriver(object):
     new_code_class_name = "mousehuntPage-puzzle-form-newCode"
     journal_entry_id = "journallatestentry"
         
-    def __init__(self, headless=True):
-        options = webdriver.ChromeOptions()
-        options.add_argument("log-level=2")
-        if headless:
-            options.add_argument("headless")
-            
-        driver = webdriver.Chrome(chrome_options=options)
+    def __init__(self):
+        driver = webdriver.Firefox()
         driver.delete_all_cookies()
         self._driver = driver
 
