@@ -1,5 +1,5 @@
 numpy>=1.13.3
-PIL>=4.2.1
+pillow>=5.0.0
 pytesseract>=0.1.8
 python-dotenv>=0.7.1
 requests>=2.13.0
