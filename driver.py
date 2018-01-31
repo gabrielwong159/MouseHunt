@@ -49,8 +49,10 @@ class MouseHuntDriver(object):
         print("Ready")
 
     def wait_for_next_horn(self):
+        offset = random.randint(0, 200)
+        offset_per_min = round(offset/15, 2)
         for i in range(15):
-            time.sleep(60 + random.randint(0, 15))
+            time.sleep(60 + offset_per_min)
             print(i+1, end=" ", flush=True)
         print()
         
