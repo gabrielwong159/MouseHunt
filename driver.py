@@ -26,6 +26,7 @@ class MouseHuntDriver(object):
     def __init__(self, headless=True):
         options = webdriver.ChromeOptions()
         options.add_argument("log-level=2")
+        options.add_argument("disable-notifications")
         if headless:
             options.add_argument("headless")
             
