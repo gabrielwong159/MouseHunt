@@ -23,6 +23,7 @@ class MouseHuntDriver(object):
         options = webdriver.ChromeOptions()
         options.add_argument("log-level=2")
         options.add_argument("disable-notifications")
+        options.add_argument("disable-gpu")
         if headless:
             options.add_argument("headless")
             
@@ -48,9 +49,14 @@ class MouseHuntDriver(object):
     def wait_for_next_horn(self):
         offset = random.randint(0, 200)
         offset_per_min = round(offset/15, 2)
+        print("Additional offset:", offset)
         for i in range(15):
             time.sleep(60 + offset_per_min)
             print(i+1, end=" ", flush=True)
+
+            minute = datetime.datetime.now().minute
+            if minute == 45 or minute == 46:
+                print("\n" + self.get_latest_entry())
         print()
         
     def sound_the_horn(self):
