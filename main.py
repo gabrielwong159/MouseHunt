@@ -2,17 +2,19 @@ from driver import MouseHuntDriver
 
 def main():
     # automatically resets when an unknown error is encountered
+    driver = MouseHuntDriver()
     try:
-        driver = MouseHuntDriver()
         driver.login()
         while True:
             driver.sound_the_horn()
+            if driver.is_bait_empty():
+                driver.change_bait("Brie Cheese")
             driver.wait_for_next_horn()
     except KeyboardInterrupt as e:
         print(e)
     except Exception as e:
         print(e)
-        driver.quit()
+        driver.close()
         main()
 
 if __name__ == "__main__":

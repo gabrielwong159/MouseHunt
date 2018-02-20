@@ -12,6 +12,7 @@ from selenium.webdriver.remote.remote_connection import LOGGER
 from dotenv import find_dotenv, load_dotenv
 from cv import read_captcha
 from exception import InvalidCaptchaException
+from telegram_util import notify_message
 
 class MouseHuntDriver(object):
     login_url = "https://www.facebook.com/login.php"
@@ -52,6 +53,7 @@ class MouseHuntDriver(object):
 
             minute = datetime.datetime.now().minute
             if minute == 45 or minute == 46:
+                self._driver.get(self.game_url)
                 print("\n" + self.get_latest_entry())
         print()
         
@@ -111,6 +113,10 @@ class MouseHuntDriver(object):
         # avoid halting the entire process when no journal entry is found
         try:
             text = driver.find_element_by_id("journallatestentry").text
+
+            if "Frosty Metal" in text:
+                notify_message("Frosty Metal found")
+
             return text
         except NoSuchElementException:
             return "Could not find journal entry"
