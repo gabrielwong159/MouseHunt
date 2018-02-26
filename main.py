@@ -12,7 +12,7 @@ def main():
         print(e)
     except Exception as e:
         print(e)
-        driver.quit()
+        driver.close()
         main()
 
 if __name__ == "__main__":

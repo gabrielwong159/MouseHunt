@@ -56,6 +56,7 @@ class MouseHuntDriver(object):
 
             minute = datetime.datetime.now().minute
             if minute == 45 or minute == 46:
+                self._driver.get(self.game_url)
                 print("\n" + self.get_latest_entry())
         print()
         
