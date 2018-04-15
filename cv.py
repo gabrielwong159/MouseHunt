@@ -35,19 +35,18 @@ def sanitize(s):
     return "".join(l)
 
 def read_captcha(url):
-    download = os.path.join("captcha/downloads", str(int(time.time())) + ".png")
     # fetch image from url and save it to file
     response = requests.get(url)
     image = Image.open(BytesIO(response.content))
     image.save(temp_file)
-    image.save(download)    
 
     process_captcha() # image preprocessing with opencv
     
     # ocr with tesseract
     text = pytesseract.image_to_string(Image.open(temp_file))
     
-    os.remove(temp_file)
+    # no longer remove the temp_file
+    #os.remove(temp_file)
     return sanitize(text) 
 
 if __name__ == "__main__":
