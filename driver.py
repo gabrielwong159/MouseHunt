@@ -1,4 +1,4 @@
-import datetime
+gimport datetime
 import json
 import os
 import random
@@ -55,8 +55,11 @@ class MouseHuntDriver(object):
         print("Ready")
 
     def switch_to_iframe(self):
-        iframe = self._driver.find_element_by_id("iframe_canvas")
-        self._driver.switch_to_frame(iframe)
+        try:
+            iframe = self._driver.find_element_by_id("iframe_canvas")
+            self._driver.switch_to_frame(iframe)
+        except NoSuchElementException:
+            pass
 
     def switch_to_default_content(self):
         self._driver.switch_to_default_content()
@@ -66,12 +69,7 @@ class MouseHuntDriver(object):
 
     def get_latest_entry(self):
         driver = self._driver
-        
-        # switch to iframe if available - not available when captcha
-        try:
-            self.switch_to_iframe()
-        except NoSuchElementException:
-            pass
+        self.switch_to_iframe()
 
         # avoid halting the entire process when no journal entry is found
         try:
@@ -150,7 +148,6 @@ class MouseHuntDriver(object):
         self.switch_to_default_content()
         driver.get(self.game_url)
 
-
     def list_locations(self):
         driver = self._driver
         driver.get(self.travel_url)
@@ -192,13 +189,46 @@ class MouseHuntDriver(object):
         self.switch_to_default_content()
         return bait_empty
 
+    def get_setup(self, target_class):
+        data_classifications = 'base weapon trinket bait'.split()
+        if not target_class in data_classifications:
+            print("Error changing setup: Target class not found")
+            return
+
+        driver = self._driver
+        driver.get(self.game_url)
+        self.switch_to_iframe()
+
+        trap_controls = driver.find_elements_by_class_name("trapControlThumb")
+        for element in trap_controls:
+            if element.get_attribute("data-classification") == target_class:
+                element.click()
+
+        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "trapComponentRow")))
+        components = driver.find_elements_by_class_name("trapComponentRow")
+
+        for element in components:
+            if "selected" in element.get_attribute("class"):
+                name = element.find_element_by_class_name("name").text
+                if "not armed" in name:
+                    setup = None
+                else:
+                    setup = name
+                break
+
+        self.switch_to_default_content()
+        driver.get(self.game_url)
+        return setup
+
     def change_setup(self, target_class, target_name):
+        print('Change', target_class, target_name)
         data_classifications = 'base weapon trinket bait'.split()
         if not target_class in data_classifications:
             print("Error changing setup: Target class not found")
             return
         
         driver = self._driver
+        driver.get(self.game_url)
         self.switch_to_iframe()
 
         trap_controls = driver.find_elements_by_class_name("trapControlThumb")
@@ -211,8 +241,9 @@ class MouseHuntDriver(object):
 
         if target_name.lower() == "disarm":
             for element in components:
-                if "canDisarm" in element.get_attribute("class"):
-                    element.click()
+                if "selected" in element.get_attribute("class"):
+                    if element.text != "Charm not armed.":
+                        element.find_element_by_class_name("action").click()
         else:
             for element in components:
                 if "selected" in element.get_attribute("class"): continue
@@ -220,6 +251,10 @@ class MouseHuntDriver(object):
                 if name == target_name:
                     element.click()
                     break
-
-        self.switch_to_default_content()
+                
         driver.get(self.game_url)
+    
+if __name__ == "__main__":
+    driver = MouseHuntDriver(headless=False)
+    driver.login()
+    driver.change_setup('trinket', 'disarm')
