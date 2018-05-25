@@ -8,13 +8,6 @@ import pytesseract
 from io import BytesIO
 from PIL import Image
 
-temp_file = "captcha.png"
-
-def process_captcha():
-    image = cv2.imread(temp_file, 0)
-    
-    cv2.imwrite(temp_file, process(image))
-
 def process(image):
     def kernel(size): return np.ones(size, np.uint8)
     
@@ -26,7 +19,6 @@ def process(image):
     dilated = cv2.dilate(eroded, kernel((2,2)), iterations=1)
 
     shrunk = cv2.resize(dilated, (0,0), fx=0.5, fy=0.5)
-    
     return shrunk
 
 def sanitize(s):
@@ -38,15 +30,8 @@ def read_captcha(url):
     # fetch image from url and save it to file
     response = requests.get(url)
     image = Image.open(BytesIO(response.content))
-    image.save(temp_file)
-
-    process_captcha() # image preprocessing with opencv
-    
-    # ocr with tesseract
-    text = pytesseract.image_to_string(Image.open(temp_file))
-    
-    # no longer remove the temp_file
-    #os.remove(temp_file)
+    image = process(np.array(image))
+    text = pytesseract.image_to_string(Image.fromarray(image))
     return sanitize(text) 
 
 if __name__ == "__main__":
@@ -54,8 +39,6 @@ if __name__ == "__main__":
     for file in os.listdir(folder_name):
         file_name = os.path.join(folder_name, file)
         image = cv2.imread(file_name, 0)
-        cv2.imwrite(temp_file, image)
-
-        process_captcha()
-        text = pytesseract.image_to_string(Image.open(temp_file))
+        image = process(image)
+        text = pytesseract.image_to_string(Image.fromarray(image))
         print(sanitize(text))
