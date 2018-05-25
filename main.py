@@ -1,4 +1,4 @@
-from driver import MouseHuntDriver
+from util.driver import MouseHuntDriver
 
 def main():
     # automatically resets when an unknown error is encountered

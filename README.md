@@ -12,6 +12,26 @@ Simple inspection shows that the captchas always contained 5 characters of the s
 
 Images were first converted to grayscale and binary thresholded. In order to remove the lines, the images were then eroded, as the lines were thinner. Subsequent dilation restored the original characters.
 
+## Additional setup
+You should obtain `geckodriver` or `chromedriver`, whichever you are using. You should also download `Tesseract`, as `pytesseract` is only a wrapper.  
+
+For config files, there is one for Facebook login and one for the Telegram bot.  
+
+`config/facebook_config.json`
+```
+{
+    "email": "email@example.com",
+    "password": "hunter2"
+}
+```
+`config/telegram_config.json`
+```
+{
+    "token": "<telegram bot token>",
+    "chatid": "<telegram chat id>"
+}
+```
+
 ## Future work
 OCR is currently being done via Tesseract. As I am currently learning object localization and recognition, I hope to eventually implement the OCR myself.
 

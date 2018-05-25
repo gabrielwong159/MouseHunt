@@ -1,11 +1,7 @@
-import json
 from telegram.ext import Updater
+from . import config
 
-with open("telegram_config.json", "r") as f:
-    telegram_config = json.loads(f.read())
-    telegram_token = telegram_config["token"]
-    chat_id = telegram_config["chatid"]
-
+telegram_token, chat_id = config.get_telegram_config()
 updater = Updater(token=telegram_token)
 bot = updater.dispatcher.bot
 

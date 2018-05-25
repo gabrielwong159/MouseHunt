@@ -1,6 +1,6 @@
 __pycache__
-.env
+.idea
+
 captcha/downloads
-geckodriver.log
-debug.log
-telegram_config.json
+config/*
+*.log

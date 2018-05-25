@@ -1,6 +1,4 @@
 import datetime
-import json
-import os
 import random
 import sys
 import time
@@ -10,10 +8,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.remote_connection import LOGGER
-from dotenv import find_dotenv, load_dotenv
-from cv import read_captcha
-from exception import InvalidCaptchaException
-from telegram_util import notify_message
+from util.config import get_facebook_config
+from util.cv import read_captcha
+from util.exception import InvalidCaptchaException
+from util.telegram import notify_message
 
 class MouseHuntDriver(object):
     login_url = "https://www.facebook.com/login.php"
@@ -36,10 +34,8 @@ class MouseHuntDriver(object):
 
         driver.delete_all_cookies()
         self._driver = driver
-
-        load_dotenv(find_dotenv())
-        self._email, self._password = os.environ.get("email"), os.environ.get("password")
-
+        self._email, self._password = get_facebook_config()
+        
     def login(self):
         driver = self._driver
 
@@ -253,8 +249,3 @@ class MouseHuntDriver(object):
                     break
                 
         driver.get(self.game_url)
-    
-if __name__ == "__main__":
-    driver = MouseHuntDriver(headless=False)
-    driver.login()
-    driver.change_setup('trinket', 'disarm')

@@ -1,4 +1,4 @@
-from driver import MouseHuntDriver
+from util.driver import MouseHuntDriver
 
 if __name__ == "__main__":
     driver = MouseHuntDriver(headless=False)

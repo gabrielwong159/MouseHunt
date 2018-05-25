@@ -1,6 +1,5 @@
-numpy>=1.13.3
-pillow>=5.0.0
-pytesseract>=0.1.8
-python-dotenv>=0.7.1
-requests>=2.13.0
-selenium>=3.4.3
+numpy
+pillow
+pytesseract
+requests
+selenium
