@@ -4,3 +4,4 @@ __pycache__
 captcha/downloads
 config/*
 *.log
+triggers.txt

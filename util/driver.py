@@ -1,17 +1,16 @@
 import datetime
 import random
-import sys
 import time
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.remote.remote_connection import LOGGER
 from util.config import get_facebook_config
 from util.cv import read_captcha
 from util.exception import InvalidCaptchaException
 from util.telegram import notify_message
+
 
 class MouseHuntDriver(object):
     login_url = "https://www.facebook.com/login.php"
@@ -20,33 +19,24 @@ class MouseHuntDriver(object):
     travel_url = "https://apps.facebook.com/mousehunt/travel.php"
 
     def __init__(self, headless=True):
-        if sys.platform == "win32":
-            options = webdriver.ChromeOptions()
-            options.add_argument("log-level=2")
-            options.add_argument("disable-notifications")
-            options.add_argument("disable-gpu")
-            if headless:
-                options.add_argument("headless")
-
-            driver = webdriver.Chrome(chrome_options=options)
-        else:
-            driver = webdriver.Firefox()
-
+        options = webdriver.ChromeOptions()
+        options.add_argument("log-level=2")
+        options.add_argument("disable-notifications")
+        options.add_argument("disable-gpu")
+        if headless:
+            options.add_argument("headless")
+        driver = webdriver.Chrome(chrome_options=options)
         driver.delete_all_cookies()
         self._driver = driver
         self._email, self._password = get_facebook_config()
         
     def login(self):
         driver = self._driver
-
         driver.get(self.login_url)
         driver.find_element_by_id("email").send_keys(self._email)
         driver.find_element_by_id("pass").send_keys(self._password)
         driver.find_element_by_id("loginbutton").click()
         print("Logged in")
-
-        time.sleep(5)
-
         driver.get(self.game_url)
         print("Ready")
 
@@ -113,7 +103,7 @@ class MouseHuntDriver(object):
             captcha = driver.find_element_by_class_name("mousehuntPage-puzzle-form-captcha-image")
             image_url = captcha.value_of_css_property("background-image")[5:-2] # url("____")
             text = read_captcha(image_url)
-            if (len(text) != 5):
+            if len(text) != 5:
                 raise InvalidCaptchaException()
 
             driver.find_element_by_class_name("mousehuntPage-puzzle-form-code").send_keys(text)
@@ -178,16 +168,21 @@ class MouseHuntDriver(object):
                             self.switch_to_default_content()
                             return
 
-    def is_bait_empty(self):
+    def is_empty(self, target_class):
+        data_classifications = 'base weapon trinket bait'.split()
+        if target_class not in data_classifications:
+            print("Error changing setup: Target class not found")
+            return
+
         self.switch_to_iframe()
-        bait = self._driver.find_element_by_class_name("bait")
-        bait_empty = "empty" in bait.get_attribute("class").split()
+        target = self._driver.find_element_by_class_name(target_class)
+        target_empty = "empty" in target.get_attribute("class").split()
         self.switch_to_default_content()
-        return bait_empty
+        return target_empty
 
     def get_setup(self, target_class):
         data_classifications = 'base weapon trinket bait'.split()
-        if not target_class in data_classifications:
+        if target_class not in data_classifications:
             print("Error changing setup: Target class not found")
             return
 
@@ -219,7 +214,7 @@ class MouseHuntDriver(object):
     def change_setup(self, target_class, target_name):
         print('Change', target_class, target_name)
         data_classifications = 'base weapon trinket bait'.split()
-        if not target_class in data_classifications:
+        if target_class not in data_classifications:
             print("Error changing setup: Target class not found")
             return
         
