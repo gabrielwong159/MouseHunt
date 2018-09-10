@@ -128,7 +128,7 @@ class MouseHuntDriver(webdriver.Chrome):
     def is_empty(self, target_class):
         data_classifications = 'base weapon trinket bait'.split()
         if target_class not in data_classifications:
-            print("Error changing setup: Target class not found")
+            print(f"Error changing setup - target class not found: <{target_class}>")
             return
 
         target = self.find_element_by_class_name(target_class)
@@ -138,7 +138,7 @@ class MouseHuntDriver(webdriver.Chrome):
     def get_setup(self, target_class):
         data_classifications = 'base weapon trinket bait'.split()
         if target_class not in data_classifications:
-            print("Error changing setup: Target class not found")
+            print(f"Error changing setup - target class not found: <{target_class}>")
             return
 
         self.get(self.game_url)
@@ -167,7 +167,7 @@ class MouseHuntDriver(webdriver.Chrome):
         print('Change', target_class, target_name)
         data_classifications = 'base weapon trinket bait'.split()
         if target_class not in data_classifications:
-            print("Error changing setup: Target class not found")
+            print(f"Error changing setup - target class not found: <{target_class}>")
             return
         
         self.get(self.game_url)

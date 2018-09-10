@@ -28,7 +28,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         try:
             elem = self.find_element_by_class_name('warpathHUD-streak-quantity')
             # if charm is empty, just used a commander, replace with something
-            if self.is_empty('charm'):
+            if self.is_empty('trinket'):
                 self.change_setup('trinket', 'Warpath Scout Charm')
                 notify_message('charm empty')
             # if streak is high, switch to commander
