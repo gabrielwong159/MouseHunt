@@ -21,8 +21,8 @@ class MouseHuntDriver(webdriver.Chrome):
     def __init__(self, headless=True):
         options = webdriver.ChromeOptions()
         options.add_argument("log-level=2")
-        options.add_argument("disable-notifications")
-        options.add_argument("disable-gpu")
+        options.add_argument("disable-notifications")  # disable popup notifications
+        options.add_argument("disable-gpu")  # enabling gpu results in non-critical warnings
         if headless:
             options.add_argument("headless")
         super().__init__(chrome_options=options)
@@ -65,7 +65,7 @@ class MouseHuntDriver(webdriver.Chrome):
             print(i+1, end=" ", flush=True)
 
             minute = datetime.datetime.now().minute
-            if minute == 45:
+            if minute == 45:  # trap check at *.45
                 self.get(self.game_url)
                 print("\n" + self.get_latest_entry())
         print()
@@ -76,27 +76,26 @@ class MouseHuntDriver(webdriver.Chrome):
 
     def check_captcha(self, n=0):
         try:
-            if n > 0: self.change_captcha() # if previously failed, change captcha first
+            if n > 0: self.change_captcha()  # if previously failed, change captcha first
             
             captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-captcha-image")
-            image_url = captcha.value_of_css_property("background-image")[5:-2] # url("____")
+            image_url = captcha.value_of_css_property("background-image")[5:-2]  # url("____")
             text = read_captcha(image_url)
-            if len(text) != 5:
+            if len(text) != 5:  # all captchas are always 5 characters
                 raise InvalidCaptchaException()
 
             self.find_element_by_class_name("mousehuntPage-puzzle-form-code").send_keys(text)
             self.find_element_by_class_name("mousehuntPage-puzzle-form-code-button").click()
-
             print("Captcha at:", datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"), "-", text)
             self.sound_the_horn()
         except NoSuchElementException:
             print("Buwuu")
             print(self.get_latest_entry())
-        except WebDriverException as e:
+        except WebDriverException:
             # sometimes encounter the issue where the captcha button was an unclickable element
             self.get(self.game_url)
             self.check_captcha(n+1)
-        except InvalidCaptchaException: # enter 
+        except InvalidCaptchaException:  # enter
             self.check_captcha(n+1)
 
     def change_captcha(self):
@@ -107,9 +106,10 @@ class MouseHuntDriver(webdriver.Chrome):
 
     def list_locations(self):
         self.get(self.travel_url)
-
         map_regions = self.find_elements_by_class_name("travelPage-map-region-name")
         for region in map_regions:
+            if not region.is_displayed():  # ignore when location is not accessible
+                continue
             region.click()
             map_locations = self.find_elements_by_class_name("travelPage-map-region-environment-link")
             for element in map_locations:
@@ -120,11 +120,11 @@ class MouseHuntDriver(webdriver.Chrome):
         self.get(self.travel_url)
         map_regions = self.find_elements_by_class_name("travelPage-map-region-name")
         for region in map_regions:
-            if not region.is_displayed():
+            if not region.is_displayed():  # ignore when location is not accessible
                 continue
             region.click()
+
             map_locations = self.find_elements_by_class_name("travelPage-map-region-environment-link")
-            
             for element in map_locations:
                 if element.text == location:
                     element.click()
