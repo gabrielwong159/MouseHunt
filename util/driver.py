@@ -9,7 +9,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from util.config import get_facebook_config
 from util.cv import read_captcha
 from util.exception import InvalidCaptchaException
-from util.telegram import notify_message
 
 
 class MouseHuntDriver(webdriver.Chrome):
@@ -42,16 +41,6 @@ class MouseHuntDriver(webdriver.Chrome):
         # avoid halting the entire process when no journal entry is found
         try:
             text = self.find_element_by_id("journallatestentry").text
-
-            with open('triggers.txt', 'r') as f:
-                s = f.read()
-            if s:
-                triggers = s.strip().split('\n')
-                for word in triggers:
-                    if word in text:
-                        notify_message(text)
-                        break
-
             return text
         except NoSuchElementException:
             return "Could not find journal entry"
@@ -88,8 +77,8 @@ class MouseHuntDriver(webdriver.Chrome):
             self.find_element_by_class_name("mousehuntPage-puzzle-form-code-button").click()
             print("Captcha at:", datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"), "-", text)
             self.sound_the_horn()
-        except NoSuchElementException:
-            print("Buwuu")
+        except NoSuchElementException:  # no captcha element found
+            print("Buwuu")  # continue without doing anything else
             print(self.get_latest_entry())
         except WebDriverException:
             # sometimes encounter the issue where the captcha button was an unclickable element
