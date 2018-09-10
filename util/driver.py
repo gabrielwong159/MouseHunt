@@ -12,7 +12,7 @@ from util.exception import InvalidCaptchaException
 from util.telegram import notify_message
 
 
-class MouseHuntDriver(object):
+class MouseHuntDriver(webdriver.Chrome):
     login_url = "https://www.facebook.com/login.php"
     game_url = "https://apps.facebook.com/mousehunt/"
     horn_url = "https://apps.facebook.com/mousehunt/turn.php"
@@ -25,41 +25,32 @@ class MouseHuntDriver(object):
         options.add_argument("disable-gpu")
         if headless:
             options.add_argument("headless")
-        driver = webdriver.Chrome(chrome_options=options)
-        driver.delete_all_cookies()
-        self._driver = driver
+        super().__init__(chrome_options=options)
+        self.delete_all_cookies()
         self._email, self._password = get_facebook_config()
         
     def login(self):
-        driver = self._driver
-        driver.get(self.login_url)
-        driver.find_element_by_id("email").send_keys(self._email)
-        driver.find_element_by_id("pass").send_keys(self._password)
-        driver.find_element_by_id("loginbutton").click()
+        self.get(self.login_url)
+        self.find_element_by_id("email").send_keys(self._email)
+        self.find_element_by_id("pass").send_keys(self._password)
+        self.find_element_by_id("loginbutton").click()
         print("Logged in")
-        driver.get(self.game_url)
+        self.get(self.game_url)
         print("Ready")
 
     def switch_to_iframe(self):
         try:
-            iframe = self._driver.find_element_by_id("iframe_canvas")
-            self._driver.switch_to_frame(iframe)
+            iframe = self.find_element_by_id("iframe_canvas")
+            self.switch_to.frame(iframe)
         except NoSuchElementException:
             pass
 
-    def switch_to_default_content(self):
-        self._driver.switch_to_default_content()
-
-    def close(self):
-        self._driver.close()
-
     def get_latest_entry(self):
-        driver = self._driver
         self.switch_to_iframe()
 
         # avoid halting the entire process when no journal entry is found
         try:
-            text = driver.find_element_by_id("journallatestentry").text
+            text = self.find_element_by_id("journallatestentry").text
 
             with open('triggers.txt', 'r') as f:
                 s = f.read()
@@ -74,7 +65,7 @@ class MouseHuntDriver(object):
         except NoSuchElementException:
             return "Could not find journal entry"
         finally:
-            self.switch_to_default_content()
+            self.switch_to.default_content()
 
     def wait_for_next_horn(self):
         offset = random.randint(0, 200)
@@ -86,29 +77,28 @@ class MouseHuntDriver(object):
 
             minute = datetime.datetime.now().minute
             if minute == 45:
-                self._driver.get(self.game_url)
+                self.get(self.game_url)
                 print("\n" + self.get_latest_entry())
         print()
         
     def sound_the_horn(self):
-        self._driver.get(self.horn_url)
+        self.get(self.horn_url)
         self.check_captcha()
 
     def check_captcha(self, n=0):
-        driver = self._driver
         try:
             if n > 0: self.change_captcha() # if previously failed, change captcha first
             
             self.switch_to_iframe()
-            captcha = driver.find_element_by_class_name("mousehuntPage-puzzle-form-captcha-image")
+            captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-captcha-image")
             image_url = captcha.value_of_css_property("background-image")[5:-2] # url("____")
             text = read_captcha(image_url)
             if len(text) != 5:
                 raise InvalidCaptchaException()
 
-            driver.find_element_by_class_name("mousehuntPage-puzzle-form-code").send_keys(text)
-            driver.find_element_by_class_name("mousehuntPage-puzzle-form-code-button").click()
-            self.switch_to_default_content()
+            self.find_element_by_class_name("mousehuntPage-puzzle-form-code").send_keys(text)
+            self.find_element_by_class_name("mousehuntPage-puzzle-form-code-button").click()
+            self.switch_to.default_content()
 
             print("Captcha at:", datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"), "-", text)
             self.sound_the_horn()
@@ -117,55 +107,51 @@ class MouseHuntDriver(object):
             print(self.get_latest_entry())
         except WebDriverException as e:
             # sometimes encounter the issue where the captcha button was an unclickable element
-            driver.get(self.game_url)
+            self.get(self.game_url)
             self.check_captcha(n+1)
         except InvalidCaptchaException: # enter 
             self.check_captcha(n+1)
 
     def change_captcha(self):
-        driver = self._driver
-        
-        driver.get(self.game_url)
+        self.get(self.game_url)
         self.switch_to_iframe()
         
-        new_captcha = driver.find_element_by_class_name("mousehuntPage-puzzle-form-newCode")
+        new_captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-newCode")
         new_captcha.find_element_by_tag_name("a").click()
 
-        self.switch_to_default_content()
-        driver.get(self.game_url)
+        self.switch_to.default_content()
+        self.get(self.game_url)
 
     def list_locations(self):
-        driver = self._driver
-        driver.get(self.travel_url)
+        self.get(self.travel_url)
         self.switch_to_iframe()
 
-        map_regions = driver.find_elements_by_class_name("travelPage-map-region-name")
+        map_regions = self.find_elements_by_class_name("travelPage-map-region-name")
         for region in map_regions:
             region.click()
-            map_locations = driver.find_elements_by_class_name("travelPage-map-region-environment-link")
+            map_locations = self.find_elements_by_class_name("travelPage-map-region-environment-link")
             for element in map_locations:
                 text = element.text.strip()
                 if text: print(text)
 
     def travel(self, location):
-        driver = self._driver
-        driver.get(self.travel_url)
+        self.get(self.travel_url)
         self.switch_to_iframe()
 
-        map_regions = driver.find_elements_by_class_name("travelPage-map-region-name")
+        map_regions = self.find_elements_by_class_name("travelPage-map-region-name")
         for region in map_regions:
             region.click()
-            map_locations = driver.find_elements_by_class_name("travelPage-map-region-environment-link")
+            map_locations = self.find_elements_by_class_name("travelPage-map-region-environment-link")
             
             for element in map_locations:
                 if element.text == location:
                     element.click()
-                    travel_buttons = driver.find_elements_by_class_name("travelPage-map-image-environment-button")
+                    travel_buttons = self.find_elements_by_class_name("travelPage-map-image-environment-button")
                     
                     for element in travel_buttons:
                         if element.is_displayed():
                             element.click()
-                            self.switch_to_default_content()
+                            self.switch_to.default_content()
                             return
 
     def is_empty(self, target_class):
@@ -175,9 +161,9 @@ class MouseHuntDriver(object):
             return
 
         self.switch_to_iframe()
-        target = self._driver.find_element_by_class_name(target_class)
+        target = self.find_element_by_class_name(target_class)
         target_empty = "empty" in target.get_attribute("class").split()
-        self.switch_to_default_content()
+        self.switch_to.default_content()
         return target_empty
 
     def get_setup(self, target_class):
@@ -186,17 +172,16 @@ class MouseHuntDriver(object):
             print("Error changing setup: Target class not found")
             return
 
-        driver = self._driver
-        driver.get(self.game_url)
+        self.get(self.game_url)
         self.switch_to_iframe()
 
-        trap_controls = driver.find_elements_by_class_name("trapControlThumb")
+        trap_controls = self.find_elements_by_class_name("trapControlThumb")
         for element in trap_controls:
             if element.get_attribute("data-classification") == target_class:
                 element.click()
 
-        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "trapComponentRow")))
-        components = driver.find_elements_by_class_name("trapComponentRow")
+        WebDriverWait(self, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "trapComponentRow")))
+        components = self.find_elements_by_class_name("trapComponentRow")
 
         for element in components:
             if "selected" in element.get_attribute("class"):
@@ -207,8 +192,8 @@ class MouseHuntDriver(object):
                     setup = name
                 break
 
-        self.switch_to_default_content()
-        driver.get(self.game_url)
+        self.switch_to.default_content()
+        self.get(self.game_url)
         return setup
 
     def change_setup(self, target_class, target_name):
@@ -218,17 +203,16 @@ class MouseHuntDriver(object):
             print("Error changing setup: Target class not found")
             return
         
-        driver = self._driver
-        driver.get(self.game_url)
+        self.get(self.game_url)
         self.switch_to_iframe()
 
-        trap_controls = driver.find_elements_by_class_name("trapControlThumb")
+        trap_controls = self.find_elements_by_class_name("trapControlThumb")
         for element in trap_controls:
             if element.get_attribute("data-classification") == target_class:
                 element.click()
 
-        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "trapComponentRow")))
-        components = driver.find_elements_by_class_name("trapComponentRow")
+        WebDriverWait(self, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "trapComponentRow")))
+        components = self.find_elements_by_class_name("trapComponentRow")
 
         if target_name.lower() == "disarm":
             for element in components:
@@ -243,4 +227,4 @@ class MouseHuntDriver(object):
                     element.click()
                     break
                 
-        driver.get(self.game_url)
+        self.get(self.game_url)
