@@ -13,10 +13,10 @@ from util.telegram import notify_message
 
 
 class MouseHuntDriver(webdriver.Chrome):
-    login_url = "https://www.facebook.com/login.php"
-    game_url = "https://apps.facebook.com/mousehunt/"
-    horn_url = "https://apps.facebook.com/mousehunt/turn.php"
-    travel_url = "https://apps.facebook.com/mousehunt/travel.php"
+    login_url = "https://www.mousehuntgame.com/login.php"
+    game_url = "https://www.mousehuntgame.com/"
+    horn_url = "https://www.mousehuntgame.com/turn.php"
+    travel_url = "https://www.mousehuntgame.com/travel.php?tab=map"
 
     def __init__(self, headless=True):
         options = webdriver.ChromeOptions()
@@ -31,23 +31,14 @@ class MouseHuntDriver(webdriver.Chrome):
         
     def login(self):
         self.get(self.login_url)
-        self.find_element_by_id("email").send_keys(self._email)
-        self.find_element_by_id("pass").send_keys(self._password)
-        self.find_element_by_id("loginbutton").click()
+        self.find_element_by_name("accountName").send_keys(self._email)
+        self.find_element_by_name("password").send_keys(self._password)
+        self.find_element_by_name("doLogin").click()
         print("Logged in")
         self.get(self.game_url)
         print("Ready")
 
-    def switch_to_iframe(self):
-        try:
-            iframe = self.find_element_by_id("iframe_canvas")
-            self.switch_to.frame(iframe)
-        except NoSuchElementException:
-            pass
-
     def get_latest_entry(self):
-        self.switch_to_iframe()
-
         # avoid halting the entire process when no journal entry is found
         try:
             text = self.find_element_by_id("journallatestentry").text
@@ -64,8 +55,6 @@ class MouseHuntDriver(webdriver.Chrome):
             return text
         except NoSuchElementException:
             return "Could not find journal entry"
-        finally:
-            self.switch_to.default_content()
 
     def wait_for_next_horn(self):
         offset = random.randint(0, 200)
@@ -89,7 +78,6 @@ class MouseHuntDriver(webdriver.Chrome):
         try:
             if n > 0: self.change_captcha() # if previously failed, change captcha first
             
-            self.switch_to_iframe()
             captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-captcha-image")
             image_url = captcha.value_of_css_property("background-image")[5:-2] # url("____")
             text = read_captcha(image_url)
@@ -98,7 +86,6 @@ class MouseHuntDriver(webdriver.Chrome):
 
             self.find_element_by_class_name("mousehuntPage-puzzle-form-code").send_keys(text)
             self.find_element_by_class_name("mousehuntPage-puzzle-form-code-button").click()
-            self.switch_to.default_content()
 
             print("Captcha at:", datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"), "-", text)
             self.sound_the_horn()
@@ -114,17 +101,12 @@ class MouseHuntDriver(webdriver.Chrome):
 
     def change_captcha(self):
         self.get(self.game_url)
-        self.switch_to_iframe()
-        
         new_captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-newCode")
         new_captcha.find_element_by_tag_name("a").click()
-
-        self.switch_to.default_content()
         self.get(self.game_url)
 
     def list_locations(self):
         self.get(self.travel_url)
-        self.switch_to_iframe()
 
         map_regions = self.find_elements_by_class_name("travelPage-map-region-name")
         for region in map_regions:
@@ -136,10 +118,10 @@ class MouseHuntDriver(webdriver.Chrome):
 
     def travel(self, location):
         self.get(self.travel_url)
-        self.switch_to_iframe()
-
         map_regions = self.find_elements_by_class_name("travelPage-map-region-name")
         for region in map_regions:
+            if not region.is_displayed():
+                continue
             region.click()
             map_locations = self.find_elements_by_class_name("travelPage-map-region-environment-link")
             
@@ -147,12 +129,12 @@ class MouseHuntDriver(webdriver.Chrome):
                 if element.text == location:
                     element.click()
                     travel_buttons = self.find_elements_by_class_name("travelPage-map-image-environment-button")
-                    
-                    for element in travel_buttons:
-                        if element.is_displayed():
+                    for element in travel_buttons:  # search through all element buttons
+                        if element.is_displayed():  # the one displayed is the one corresponding to location
                             element.click()
-                            self.switch_to.default_content()
+                            self.get(self.game_url)
                             return
+        self.get(self.game_url)  # fallback when not found (or already at location)
 
     def is_empty(self, target_class):
         data_classifications = 'base weapon trinket bait'.split()
@@ -160,10 +142,8 @@ class MouseHuntDriver(webdriver.Chrome):
             print("Error changing setup: Target class not found")
             return
 
-        self.switch_to_iframe()
         target = self.find_element_by_class_name(target_class)
         target_empty = "empty" in target.get_attribute("class").split()
-        self.switch_to.default_content()
         return target_empty
 
     def get_setup(self, target_class):
@@ -173,7 +153,6 @@ class MouseHuntDriver(webdriver.Chrome):
             return
 
         self.get(self.game_url)
-        self.switch_to_iframe()
 
         trap_controls = self.find_elements_by_class_name("trapControlThumb")
         for element in trap_controls:
@@ -192,7 +171,6 @@ class MouseHuntDriver(webdriver.Chrome):
                     setup = name
                 break
 
-        self.switch_to.default_content()
         self.get(self.game_url)
         return setup
 
@@ -204,7 +182,6 @@ class MouseHuntDriver(webdriver.Chrome):
             return
         
         self.get(self.game_url)
-        self.switch_to_iframe()
 
         trap_controls = self.find_elements_by_class_name("trapControlThumb")
         for element in trap_controls:
