@@ -30,9 +30,13 @@ class MouseHuntDriver(webdriver.Chrome):
         
     def login(self):
         self.get(self.login_url)
-        self.find_element_by_name("accountName").send_keys(self._email)
-        self.find_element_by_name("password").send_keys(self._password)
-        self.find_element_by_name("doLogin").click()
+        self.find_element_by_class_name("signInText").click()
+        time.sleep(0.1)
+        
+        login_div = self.find_elements_by_class_name("login")[-1]
+        login_div.find_element_by_name("username").send_keys(self._email)
+        login_div.find_element_by_name("password").send_keys(self._password)
+        login_div.find_element_by_class_name("actionButton").click()
         print("Logged in")
         self.get(self.game_url)
         print("Ready")
