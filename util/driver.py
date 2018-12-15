@@ -6,7 +6,6 @@ from selenium.common.exceptions import NoSuchElementException, WebDriverExceptio
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from util.config import get_facebook_config
 from util.cv import read_captcha
 from util.exception import InvalidCaptchaException
 
@@ -17,7 +16,7 @@ class MouseHuntDriver(webdriver.Chrome):
     horn_url = "https://www.mousehuntgame.com/turn.php"
     travel_url = "https://www.mousehuntgame.com/travel.php?tab=map"
 
-    def __init__(self, headless=True):
+    def __init__(self, headless=True, trap_check=45):
         options = webdriver.ChromeOptions()
         options.add_argument("log-level=2")
         options.add_argument("disable-notifications")  # disable popup notifications
@@ -26,16 +25,16 @@ class MouseHuntDriver(webdriver.Chrome):
             options.add_argument("headless")
         super().__init__(chrome_options=options)
         self.delete_all_cookies()
-        self._email, self._password = get_facebook_config()
+        self.trap_check = trap_check
         
-    def login(self):
+    def login(self, username, password):
         self.get(self.login_url)
         self.find_element_by_class_name("signInText").click()
         time.sleep(0.1)
         
         login_div = self.find_elements_by_class_name("login")[-1]
-        login_div.find_element_by_name("username").send_keys(self._email)
-        login_div.find_element_by_name("password").send_keys(self._password)
+        login_div.find_element_by_name("username").send_keys(username)
+        login_div.find_element_by_name("password").send_keys(password)
         login_div.find_element_by_class_name("actionButton").click()
         print("Logged in")
         self.get(self.game_url)
@@ -58,7 +57,7 @@ class MouseHuntDriver(webdriver.Chrome):
             print(i+1, end=" ", flush=True)
 
             minute = datetime.datetime.now().minute
-            if minute == 45:  # trap check at *.45
+            if minute == self.trap_check:
                 self.get(self.game_url)
                 print("\n" + self.get_latest_entry())
         print()

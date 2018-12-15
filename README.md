@@ -15,9 +15,9 @@ Images were first converted to grayscale and binary thresholded. In order to rem
 ## Additional setup
 You should obtain `geckodriver` or `chromedriver`, whichever you are using. You should also download `Tesseract`, as `pytesseract` is only a wrapper.  
 
-For config files, there is one for Facebook login and one for the Telegram bot.  
+For config files, there is one for MouseHunt login and one for the Telegram bot.  
 
-`config/facebook_config.json`
+`config/login_config.json`
 ```
 {
     "email": "email@example.com",
