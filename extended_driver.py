@@ -55,10 +55,13 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         curr_charm = self.get_setup('trinket')
         curr_state = 'Up' if 'Charge' in curr_charm else 'Down'
 
+        print(curr_state, charge)
         if curr_state == 'Up':
             if charge == 20:
+                print('Going down')
                 self.change_setup('trinket', 'Eggstra Charm')
         else:
             if charge <= 13:
+                print('Going up')
                 self.change_setup('trinket', 'Eggscavator Charge Charm')
 

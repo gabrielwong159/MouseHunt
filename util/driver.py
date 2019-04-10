@@ -151,10 +151,14 @@ class MouseHuntDriver(webdriver.Chrome):
             EC.presence_of_element_located((By.CLASS_NAME, item_class))
         )
         item_name = self.find_element_by_class_name(item_class).text
+
+        self.get(self.game_url)
         return item_name
 
 
     def change_setup(self, target_class, target_name):
+        print('Change setup', target_class, target_name)
+
         data_classifications = 'base weapon trinket bait'.split()
         assert target_class in data_classifications, f'Error changing setup - target class not found: <{target_class}>'
 
@@ -169,6 +173,10 @@ class MouseHuntDriver(webdriver.Chrome):
 
         all_items = self.find_elements_by_class_name('campPage-trap-itemBrowser-item')
         for item in all_items:
-            if item.find_element_by_class_name(item_class).text == target_name:
+            item_name = item.find_element_by_class_name(item_class).text
+            if item_name == target_name:
                 item.find_element_by_tag_name('a').click()
                 break
+
+        self.get(self.game_url)
+
