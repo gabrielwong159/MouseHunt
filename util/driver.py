@@ -140,60 +140,35 @@ class MouseHuntDriver(webdriver.Chrome):
 
     def get_setup(self, target_class):
         data_classifications = 'base weapon trinket bait'.split()
-        if target_class not in data_classifications:
-            print(f"Error changing setup - target class not found: <{target_class}>")
-            return
+        assert target_class in data_classifications, f'Error changing setup - target class not found: <{target_class}>'
 
-        self.get(self.game_url)
+        css_class = f'.campPage-trap-armedItem.{target_class}'
+        item_image = self.find_element_by_css_selector(css_class)
+        item_image.click()
 
-        trap_controls = self.find_elements_by_class_name("trapControlThumb")
-        for element in trap_controls:
-            if element.get_attribute("data-classification") == target_class:
-                element.click()
+        item_class = 'campPage-trap-itemBrowser-item-name'
+        WebDriverWait(self, 60).until(
+            EC.presence_of_element_located((By.CLASS_NAME, item_class))
+        )
+        item_name = driver.find_element_by_class_name(item_class).text
+        return item_name
 
-        WebDriverWait(self, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "trapComponentRow")))
-        components = self.find_elements_by_class_name("trapComponentRow")
-
-        for element in components:
-            if "selected" in element.get_attribute("class"):
-                name = element.find_element_by_class_name("name").text
-                if "not armed" in name:
-                    setup = None
-                else:
-                    setup = name
-                break
-
-        self.get(self.game_url)
-        return setup
 
     def change_setup(self, target_class, target_name):
-        print('Change', target_class, target_name)
         data_classifications = 'base weapon trinket bait'.split()
-        if target_class not in data_classifications:
-            print(f"Error changing setup - target class not found: <{target_class}>")
-            return
-        
-        self.get(self.game_url)
+        assert target_class in data_classifications, f'Error changing setup - target class not found: <{target_class}>'
 
-        trap_controls = self.find_elements_by_class_name("trapControlThumb")
-        for element in trap_controls:
-            if element.get_attribute("data-classification") == target_class:
-                element.click()
+        css_class = f'.campPage-trap-armedItem.{target_class}'
+        item_image = self.find_element_by_css_selector(css_class)
+        item_image.click()
 
-        WebDriverWait(self, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "trapComponentRow")))
-        components = self.find_elements_by_class_name("trapComponentRow")
+        item_class = 'campPage-trap-itemBrowser-item-name'
+        WebDriverWait(self, 60).until(
+            EC.presence_of_element_located((By.CLASS_NAME, item_class))
+        )
 
-        if target_name.lower() == "disarm":
-            for element in components:
-                if "selected" in element.get_attribute("class"):
-                    if element.text != "Charm not armed.":
-                        element.find_element_by_class_name("action").click()
-        else:
-            for element in components:
-                if "selected" in element.get_attribute("class"): continue
-                name = element.find_element_by_class_name("name").text
-                if name == target_name:
-                    element.click()
-                    break
-                
-        self.get(self.game_url)
+        all_items = self.find_elements_by_class_name('campPage-trap-itemBrowser-item')
+        for item in all_items:
+            if item.find_element_by_class_name(item_class).text == target_name:
+                item.find_element_by_tag_name('a').click()
+                break

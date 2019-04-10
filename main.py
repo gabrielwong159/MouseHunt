@@ -7,7 +7,7 @@ def main():
     driver = None
     # automatically resets when an unknown error is encountered
     try:
-        driver = ExtendedMouseHuntDriver(headless=False, trap_check=45)
+        driver = ExtendedMouseHuntDriver(headless=True, trap_check=45)
         driver.login(username, password)
         while True:
             driver.sound_the_horn()
