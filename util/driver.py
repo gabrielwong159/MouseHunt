@@ -150,7 +150,7 @@ class MouseHuntDriver(webdriver.Chrome):
         WebDriverWait(self, 60).until(
             EC.presence_of_element_located((By.CLASS_NAME, item_class))
         )
-        item_name = driver.find_element_by_class_name(item_class).text
+        item_name = self.find_element_by_class_name(item_class).text
         return item_name
 
 

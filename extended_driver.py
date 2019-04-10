@@ -26,7 +26,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             notify_message('Bait empty')
 
         self.check_warpath()
-        # self.check_egg_charge()
+        self.check_egg_charge()
 
     def check_warpath(self):
         try:
@@ -55,10 +55,6 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         curr_charm = self.get_setup('trinket')
         curr_state = 'Up' if 'Charge' in curr_charm else 'Down'
 
-        print('charm', curr_charm)
-        print('egg charge', charge)
-        print('curr_state', curr_state)
-        
         if curr_state == 'Up':
             if charge == 20:
                 self.change_setup('trinket', 'Eggstra Charm')
