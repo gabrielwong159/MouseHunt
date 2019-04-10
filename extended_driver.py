@@ -1,3 +1,4 @@
+import datetime
 from util.driver import MouseHuntDriver
 from selenium.common.exceptions import NoSuchElementException
 from util.telegram import notify_message
@@ -24,7 +25,10 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             self.change_setup('bait', 'Gouda Cheese')
             notify_message('Bait empty')
 
-        # check for warpath
+        self.check_warpath()
+        # self.check_egg_charge()
+
+    def check_warpath(self):
         try:
             elem = self.find_element_by_class_name('warpathHUD-streak-quantity')
             # if charm is empty, just used a commander, replace with something
@@ -32,9 +36,33 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
                 self.change_setup('trinket', 'Warpath Scout Charm')
                 notify_message('charm empty')
             # if streak is high, switch to commander
-            streak = int(elem.text)
-            if streak >= 5:
-                self.change_setup('trinket', "Super Warpath Commander's C...")
+            try:
+                streak = int(elem.text)
+            except ValueError:
+                streak = 0
+            if streak >= 6:
+                # self.change_setup('trinket', "Super Warpath Commander's C...")
                 notify_message(streak)
         except NoSuchElementException:
             pass
+
+
+    def check_egg_charge(self):
+        charge_qty_elem = self.find_element_by_class_name('springHuntHUD-charge-quantity')
+        charge = charge_qty_elem.find_element_by_tag_name('span').text
+        charge = int(charge)
+
+        curr_charm = self.get_setup('trinket')
+        curr_state = 'Up' if 'Charge' in curr_charm else 'Down'
+
+        print('charm', curr_charm)
+        print('egg charge', charge)
+        print('curr_state', curr_state)
+        
+        if curr_state == 'Up':
+            if charge == 20:
+                self.change_setup('trinket', 'Eggstra Charm')
+        else:
+            if charge <= 13:
+                self.change_setup('trinket', 'Eggscavator Charge Charm')
+
