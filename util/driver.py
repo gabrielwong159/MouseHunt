@@ -170,6 +170,11 @@ class MouseHuntDriver(webdriver.Chrome):
         WebDriverWait(self, 60).until(
             EC.presence_of_element_located((By.CLASS_NAME, item_class))
         )
+        armed_item = self.find_element_by_class_name('campPage-trap-itemBrowser-armed')
+        armed_item_name = armed_item.find_element_by_class_name(item_class).text
+        if armed_item_name == target_name:
+            self.get(self.game_url)
+            return
 
         all_items = self.find_elements_by_class_name('campPage-trap-itemBrowser-item')
         for item in all_items:

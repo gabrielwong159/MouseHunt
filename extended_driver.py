@@ -60,8 +60,10 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             if charge == 20:
                 print('Going down')
                 self.change_setup('trinket', 'Eggstra Charm')
+                self.change_setup('bait', 'Marshmallow Monterey')
         else:
-            if charge <= 13:
+            if charge <= 17:
                 print('Going up')
                 self.change_setup('trinket', 'Eggscavator Charge Charm')
+                self.change_setup('bait', 'Gouda Cheese')
 
