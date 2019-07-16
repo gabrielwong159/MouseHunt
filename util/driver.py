@@ -21,6 +21,8 @@ class MouseHuntDriver(webdriver.Chrome):
         options.add_argument("log-level=2")
         options.add_argument("disable-notifications")  # disable popup notifications
         options.add_argument("disable-gpu")  # enabling gpu results in non-critical warnings
+        # see https://stackoverflow.com/questions/50642308/webdriverexception-unknown-error-devtoolsactiveport-file-doesnt-exist-while-t/51510906#51510906
+        options.add_argument("no-sandbox")
         if headless:
             options.add_argument("headless")
         super().__init__(chrome_options=options)
