@@ -1,5 +1,7 @@
 numpy
+opencv-python
 pillow
 pytesseract
 requests
 selenium
+python-telegram-bot
