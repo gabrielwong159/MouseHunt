@@ -1,17 +1,13 @@
-import json
-from os.path import abspath, dirname, join
-cwd = abspath(dirname(__file__))
+import os
 
 
 def get_login_config():
-    config_file = join(cwd, '../config/login_config.json')
-    with open(config_file, 'r') as f:
-        config = json.loads(f.read())
-    return config['username'], config['password']
+    username = os.environ['MH_USERNAME']
+    password = os.environ['MH_PASSWORD']
+    return username, password
 
 
 def get_telegram_config():
-    config_file = join(cwd, '../config/telegram_config.json')
-    with open(config_file, 'r') as f:
-        config = json.loads(f.read())
-    return config['token'], config['chatid']
+    token = os.environ['TELEGRAM_TOKEN']
+    chat_id = os.environ['TELEGRAM_CHATID']
+    return token, chat_id
