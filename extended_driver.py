@@ -41,11 +41,10 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             except ValueError:
                 streak = 0
             if streak >= 6:
-                # self.change_setup('trinket', "Super Warpath Commander's C...")
+                # self.change_setup('trinket', "Super Warpath Commander's Charm")
                 notify_message(streak)
         except NoSuchElementException:
             pass
-
 
     def check_egg_charge(self):
         charge_qty_elem = self.find_element_by_class_name('springHuntHUD-charge-quantity')

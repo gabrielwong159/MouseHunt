@@ -40,36 +40,15 @@ class MouseHuntDriver(webdriver.Chrome):
         self.get(self.game_url)
         print("Ready")
 
-    def get_latest_entry(self):
-        # avoid halting the entire process when no journal entry is found
-        try:
-            text = self.find_element_by_id("journallatestentry").text
-            return text
-        except NoSuchElementException:
-            return "Could not find journal entry"
-
-    def wait_for_next_horn(self):
-        offset = random.randint(0, 200)
-        offset_per_min = round(offset/15, 2)
-        print("Additional offset:", offset, "dt:", offset_per_min)
-        for i in range(15):
-            time.sleep(60 + offset_per_min)
-            print(i+1, end=" ", flush=True)
-
-            minute = datetime.datetime.now().minute
-            if minute == self.trap_check:
-                self.get(self.game_url)
-                print("\n" + self.get_latest_entry())
-        print()
-        
     def sound_the_horn(self):
         self.get(self.horn_url)
         self.check_captcha()
 
     def check_captcha(self, n=0):
         try:
-            if n > 0: self.change_captcha()  # if previously failed, change captcha first
-            
+            if n > 0:
+                self.change_captcha()  # if previously failed, change captcha first
+
             captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-captcha-image")
             image_url = captcha.value_of_css_property("background-image")[5:-2]  # url("____")
             text = read_captcha(image_url)
@@ -95,6 +74,28 @@ class MouseHuntDriver(webdriver.Chrome):
         new_captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-newCode")
         new_captcha.find_element_by_tag_name("a").click()
         self.get(self.game_url)
+
+    def get_latest_entry(self):
+        # avoid halting the entire process when no journal entry is found
+        try:
+            text = self.find_element_by_id("journallatestentry").text
+            return text
+        except NoSuchElementException:
+            return "Could not find journal entry"
+
+    def wait_for_next_horn(self):
+        offset = random.randint(0, 200)
+        offset_per_min = round(offset/15, 2)
+        print("Additional offset:", offset, "dt:", offset_per_min)
+        for i in range(15):
+            time.sleep(60 + offset_per_min)
+            print(i+1, end=" ", flush=True)
+
+            minute = datetime.datetime.now().minute
+            if minute == self.trap_check:
+                self.get(self.game_url)
+                print("\n" + self.get_latest_entry())
+        print()
 
     def list_locations(self):
         self.get(self.travel_url)
@@ -154,7 +155,6 @@ class MouseHuntDriver(webdriver.Chrome):
 
         self.get(self.game_url)
         return item_name
-
 
     def change_setup(self, target_class, target_name):
         print('Change setup', target_class, target_name)
