@@ -1,4 +1,4 @@
-import datetime
+import os
 from util.driver import MouseHuntDriver
 from selenium.common.exceptions import NoSuchElementException
 from util.telegram import notify_message
@@ -7,16 +7,17 @@ from util.telegram import notify_message
 class ExtendedMouseHuntDriver(MouseHuntDriver):
     def get_latest_entry(self):
         text = super().get_latest_entry()
+        self.check_triggers(text)
+        return text
+
+    def check_triggers(self, text):
         # check journal entry for any trigger words
-        with open('triggers.txt',  'r') as f:
-            s = f.read()
-        if s:
-            triggers = s.strip().split('\n')
+        if 'TRIGGERS' in os.environ:
+            triggers = os.environ['TRIGGERS'].split(',')
             for word in triggers:
                 if word in text:
                     notify_message(text)
                     break
-        return text
 
     def sound_the_horn(self):
         super().sound_the_horn()
