@@ -18,6 +18,8 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
                 if word in text:
                     notify_message(text)
                     break
+        self.check_labyrinth_entrance(text)
+        return text
 
     def sound_the_horn(self):
         super().sound_the_horn()
@@ -28,6 +30,10 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
 
         self.check_warpath()
         self.check_egg_charge()
+    
+    def check_labyrinth_entrance(self, text):
+        if 'entrance' in text:
+            self.change_setup('bait', 'Gouda Cheese')
 
     def check_warpath(self):
         try:
