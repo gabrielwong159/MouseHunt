@@ -1,4 +1,3 @@
-import datetime
 from util.driver import MouseHuntDriver
 from selenium.common.exceptions import NoSuchElementException
 from util.telegram import notify_message
@@ -27,6 +26,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             notify_message('Bait empty')
 
         self.check_warpath()
+        self.check_bwrift()
         self.check_egg_charge()
     
     def check_labyrinth_entrance(self, text):
@@ -51,6 +51,20 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         if streak >= 6:
             # self.change_setup('trinket', "Super Warpath Commander's Charm")
             notify_message(streak)
+
+    def check_bwrift(self):
+        try:
+            elem = self.find_element_by_class_name('riftBristleWoodsHUD-chamberProgressQuantity')
+        except NoSuchElementException:
+            return
+
+        try:
+            curr, total = elem.text.split('/')
+            if int(curr) == 0:
+                notify_message('BW rift notification')
+        except ValueError as e:
+            print(elem.text, e)
+            return
 
     def check_egg_charge(self):
         try:
