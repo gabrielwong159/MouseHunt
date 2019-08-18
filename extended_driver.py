@@ -63,11 +63,19 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
 
         try:
             curr, total = elem.text.split('/')
-            if int(curr) == 0:
-                notify_message('BW rift notification')
+            notify = int(curr) == 0
         except ValueError as e:
             print(elem.text, e)
             return
+
+        if notify:
+            portal_container = self.find_element_by_class_name('riftBristleWoodsHUD-portalContainer')
+            portals = portal_container.find_elements_by_class_name('riftBristleWoodsHUD-portal')
+            portal_names = [portal.find_element_by_class_name('riftBristleWoodsHUD-portal-name').text
+                            for portal in portals]
+
+            message = f'BW rift done, portals found: {", ".join(portal_names)}'
+            notify_message(message)
 
     def check_egg_charge(self):
         try:
