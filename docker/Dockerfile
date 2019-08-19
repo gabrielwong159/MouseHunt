@@ -13,7 +13,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         # chromedriver dependencies
-        google-chrome-stable xvfb xauth \
+        google-chrome-stable=76.0.3809.100-1 xvfb xauth \
         # tesseract dependencies
         g++ autoconf automake libtool pkg-config \
         libpng-dev libjpeg62-turbo-dev libtiff5-dev zlib1g-dev \
@@ -21,7 +21,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # install chromedriver
-RUN wget https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip \
+RUN wget https://chromedriver.storage.googleapis.com/76.0.3809.68/chromedriver_linux64.zip \
     && unzip chromedriver_linux64.zip \
     && mv chromedriver /usr/bin/chromedriver \
     && chown root:root /usr/bin/chromedriver \
