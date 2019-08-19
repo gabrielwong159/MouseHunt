@@ -23,6 +23,8 @@ class MouseHuntDriver(webdriver.Chrome):
         options.add_argument("disable-gpu")  # enabling gpu results in non-critical warnings
         # see https://stackoverflow.com/questions/50642308/webdriverexception-unknown-error-devtoolsactiveport-file-doesnt-exist-while-t/51510906#51510906
         options.add_argument("no-sandbox")
+        # see https://stackoverflow.com/questions/53902507/unknown-error-session-deleted-because-of-page-crash-from-unknown-error-cannot
+        options.add_argument("disable-dev-shm-usage")
         if headless:
             options.add_argument("headless")
         super().__init__(chrome_options=options)
