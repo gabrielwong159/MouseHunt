@@ -74,7 +74,36 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             portal_names = [portal.find_element_by_class_name('riftBristleWoodsHUD-portal-name').text
                             for portal in portals]
 
-            message = f'BW rift done, portals found: {", ".join(portal_names)}'
+            def enter_portal(portal):
+                portal.click()
+                action_buttons = self.find_elements_by_class_name('mousehuntActionButton')
+                for button in action_buttons:
+                    if button.text == 'Enter Portal':
+                        button.click()
+                        break
+
+            important_portals = ['Guard Barracks', 'Security Chamber',
+                                 'Frozen Alcove', 'Furnace Room',
+                                 'Ingress Chamber', 'Pursuer Mousoleum',
+                                 'Acolyte Chamber']
+            chosen_portal = None
+            if all(portal not in portal_names for portal in important_portals):
+                portal_priority = ['Lucky Tower', 'Hidden Treasury',
+                                    'Timewarp Chamber',
+                                    'Ancient Laboratory', 'Runic Laboratory',
+                                    'Gearworks']
+                for chosen_portal in portal_priority:
+                    try:
+                        idx = portal_names.index(chosen_portal)
+                        print('BW rift target portal found:', chosen_portal, idx)
+                        enter_portal(portals[idx])
+                        break
+                    except ValueError:
+                        continue
+
+            message = f'BW rift \n' \
+                      f'Portals found: {portal_names} \n' \
+                      f'Chosen portal: {chosen_portal}'
             notify_message(message)
 
     def check_egg_charge(self):
