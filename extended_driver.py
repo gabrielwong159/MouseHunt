@@ -86,9 +86,9 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             chosen_portal = None
             if all(portal not in portal_names for portal in important_portals):
                 portal_priority = ['Lucky Tower', 'Hidden Treasury',
-                                    'Timewarp Chamber',
-                                    'Ancient Laboratory', 'Runic Laboratory',
-                                    'Gearworks']
+                                   'Timewarp Chamber',
+                                   'Ancient Lab', 'Runic Laboratory',
+                                   'Gearworks']
                 for chosen_portal in portal_priority:
                     try:
                         idx = portal_names.index(chosen_portal)
