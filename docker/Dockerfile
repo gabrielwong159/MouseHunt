@@ -13,7 +13,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         # chromedriver dependencies
-        google-chrome-stable=76.0.3809.100-1 xvfb xauth \
+        google-chrome-stable=76.0.3809.132-1 xvfb xauth \
         # tesseract dependencies
         g++ autoconf automake libtool pkg-config \
         libpng-dev libjpeg62-turbo-dev libtiff5-dev zlib1g-dev \
