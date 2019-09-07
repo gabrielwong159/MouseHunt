@@ -6,8 +6,9 @@ from selenium.common.exceptions import NoSuchElementException, WebDriverExceptio
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from util.cv import read_captcha
-from util.exception import InvalidCaptchaException
+
+from .cv import read_captcha
+from .exception import InvalidCaptchaException
 
 
 class MouseHuntDriver(webdriver.Chrome):

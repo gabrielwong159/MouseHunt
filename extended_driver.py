@@ -1,9 +1,14 @@
-from util.driver import MouseHuntDriver
 from selenium.common.exceptions import NoSuchElementException
-from util.telegram import notify_message
+from config import get_telegram_config
+from driver import MouseHuntDriver
+from telebot import BotMessager
 
 
 class ExtendedMouseHuntDriver(MouseHuntDriver):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.messager = BotMessager(*get_telegram_config())
+
     def get_latest_entry(self):
         text = super().get_latest_entry()
         # check journal entry for any trigger words
@@ -13,7 +18,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             triggers = s.strip().split('\n')
             for word in triggers:
                 if word in text:
-                    notify_message(text)
+                    self.messager.notify_message(text)
                     break
         self.check_labyrinth_entrance(text)
         return text
@@ -23,7 +28,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         # check for empty bait
         if self.is_empty('bait'):
             self.change_setup('bait', 'Gouda Cheese')
-            notify_message('Bait empty')
+            self.messager.notify_message('Bait empty')
 
         self.check_warpath()
         self.check_bwrift()
@@ -42,7 +47,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         # if charm is empty, just used a commander, replace with something
         if self.is_empty('trinket'):
             self.change_setup('trinket', 'Warpath Scout Charm')
-            notify_message('charm empty')
+            self.messager.notify_message('charm empty')
         # if streak is high, switch to commander
         try:
             streak = int(elem.text)
@@ -50,7 +55,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             streak = 0
         if streak >= 6:
             # self.change_setup('trinket', "Super Warpath Commander's Charm")
-            notify_message(streak)
+            self.messager.notify_message(streak)
 
     def check_bwrift(self):
         try:
@@ -101,7 +106,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             message = f'BW rift \n' \
                       f'Portals found: {portal_names} \n' \
                       f'Chosen portal: {chosen_portal}'
-            notify_message(message)
+            self.messager.notify_message(message)
 
     def check_egg_charge(self):
         try:

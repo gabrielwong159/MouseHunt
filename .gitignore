@@ -3,6 +3,6 @@ __pycache__
 venv
 
 captcha/downloads
-config/*
+config/*.json
 *.log
 triggers.txt

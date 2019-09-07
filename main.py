@@ -1,5 +1,5 @@
 from extended_driver import ExtendedMouseHuntDriver
-from util.config import get_login_config
+from config import get_login_config
 
 
 def main():
