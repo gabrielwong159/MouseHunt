@@ -17,7 +17,7 @@ class MouseHuntDriver(webdriver.Chrome):
     horn_url = "https://www.mousehuntgame.com/turn.php"
     travel_url = "https://www.mousehuntgame.com/travel.php?tab=map"
 
-    def __init__(self, headless=True, trap_check=45):
+    def __init__(driver, headless=True, trap_check=45):
         options = webdriver.ChromeOptions()
         options.add_argument("log-level=2")
         options.add_argument("disable-notifications")  # disable popup notifications
@@ -25,66 +25,66 @@ class MouseHuntDriver(webdriver.Chrome):
         if headless:
             options.add_argument("headless")
         super().__init__(chrome_options=options)
-        self.delete_all_cookies()
-        self.trap_check = trap_check
+        driver.delete_all_cookies()
+        driver.trap_check = trap_check
         
-    def login(self, username, password):
-        self.get(self.login_url)
-        self.find_element_by_class_name("signInText").click()
+    def login(driver, username, password):
+        driver.get(driver.login_url)
+        driver.find_element_by_class_name("signInText").click()
         time.sleep(0.1)
         
-        login_div = self.find_elements_by_class_name("login")[-1]
+        login_div = driver.find_elements_by_class_name("login")[-1]
         login_div.find_element_by_name("username").send_keys(username)
         login_div.find_element_by_name("password").send_keys(password)
         login_div.find_element_by_class_name("actionButton").click()
         print("Logged in")
-        self.get(self.game_url)
+        driver.get(driver.game_url)
         print("Ready")
 
-    def sound_the_horn(self):
-        self.get(self.horn_url)
-        self.check_captcha()
+    def sound_the_horn(driver):
+        driver.get(driver.horn_url)
+        driver.check_captcha()
 
-    def check_captcha(self, n=0):
+    def check_captcha(driver, n=0):
         try:
             if n > 0:
-                self.change_captcha()  # if previously failed, change captcha first
+                driver.change_captcha()  # if previously failed, change captcha first
 
-            captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-captcha-image")
+            captcha = driver.find_element_by_class_name("mousehuntPage-puzzle-form-captcha-image")
             image_url = captcha.value_of_css_property("background-image")[5:-2]  # url("____")
             text = read_captcha(image_url)
             if len(text) != 5:  # all captchas are always 5 characters
                 raise InvalidCaptchaException()
 
-            self.find_element_by_class_name("mousehuntPage-puzzle-form-code").send_keys(text)
-            self.find_element_by_class_name("mousehuntPage-puzzle-form-code-button").click()
+            driver.find_element_by_class_name("mousehuntPage-puzzle-form-code").send_keys(text)
+            driver.find_element_by_class_name("mousehuntPage-puzzle-form-code-button").click()
             print("Captcha at:", datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"), "-", text)
-            self.sound_the_horn()
+            driver.sound_the_horn()
         except NoSuchElementException:  # no captcha element found
             print("Buwuu")  # continue without doing anything else
-            print(self.get_latest_entry())
+            print(driver.get_latest_entry())
         except WebDriverException:
             # sometimes encounter the issue where the captcha button was an unclickable element
-            self.get(self.game_url)
-            self.check_captcha(n+1)
+            driver.get(driver.game_url)
+            driver.check_captcha(n + 1)
         except InvalidCaptchaException:  # enter
-            self.check_captcha(n+1)
+            driver.check_captcha(n + 1)
 
-    def change_captcha(self):
-        self.get(self.game_url)
-        new_captcha = self.find_element_by_class_name("mousehuntPage-puzzle-form-newCode")
+    def change_captcha(driver):
+        driver.get(driver.game_url)
+        new_captcha = driver.find_element_by_class_name("mousehuntPage-puzzle-form-newCode")
         new_captcha.find_element_by_tag_name("a").click()
-        self.get(self.game_url)
+        driver.get(driver.game_url)
 
-    def get_latest_entry(self):
+    def get_latest_entry(driver):
         # avoid halting the entire process when no journal entry is found
         try:
-            text = self.find_element_by_id("journallatestentry").text
+            text = driver.find_element_by_id("journallatestentry").text
             return text
         except NoSuchElementException:
             return "Could not find journal entry"
 
-    def wait_for_next_horn(self):
+    def wait_for_next_horn(driver):
         offset = random.randint(0, 200)
         offset_per_min = round(offset/15, 2)
         print("Additional offset:", offset, "dt:", offset_per_min)
@@ -93,96 +93,96 @@ class MouseHuntDriver(webdriver.Chrome):
             print(i+1, end=" ", flush=True)
 
             minute = datetime.datetime.now().minute
-            if minute == self.trap_check:
-                self.get(self.game_url)
-                print("\n" + self.get_latest_entry())
+            if minute == driver.trap_check:
+                driver.get(driver.game_url)
+                print("\n" + driver.get_latest_entry())
         print()
 
-    def list_locations(self):
-        self.get(self.travel_url)
-        map_regions = self.find_elements_by_class_name("travelPage-map-region-name")
+    def list_locations(driver):
+        driver.get(driver.travel_url)
+        map_regions = driver.find_elements_by_class_name("travelPage-map-region-name")
         for region in map_regions:
             if not region.is_displayed():  # ignore when location is not accessible
                 continue
             region.click()
-            map_locations = self.find_elements_by_class_name("travelPage-map-region-environment-link")
+            map_locations = driver.find_elements_by_class_name("travelPage-map-region-environment-link")
             for element in map_locations:
                 text = element.text.strip()
                 if text: print(text)
 
-    def travel(self, location):
-        self.get(self.travel_url)
-        map_regions = self.find_elements_by_class_name("travelPage-map-region-name")
+    def travel(driver, location):
+        driver.get(driver.travel_url)
+        map_regions = driver.find_elements_by_class_name("travelPage-map-region-name")
         for region in map_regions:
             if not region.is_displayed():  # ignore when location is not accessible
                 continue
             region.click()
 
-            map_locations = self.find_elements_by_class_name("travelPage-map-region-environment-link")
+            map_locations = driver.find_elements_by_class_name("travelPage-map-region-environment-link")
             for element in map_locations:
                 if element.text == location:
                     element.click()
-                    travel_buttons = self.find_elements_by_class_name("travelPage-map-image-environment-button")
+                    travel_buttons = driver.find_elements_by_class_name("travelPage-map-image-environment-button")
                     for element in travel_buttons:  # search through all element buttons
                         if element.is_displayed():  # the one displayed is the one corresponding to location
                             element.click()
-                            self.get(self.game_url)
+                            driver.get(driver.game_url)
                             return
-        self.get(self.game_url)  # fallback when not found (or already at location)
+        driver.get(driver.game_url)  # fallback when not found (or already at location)
 
-    def is_empty(self, target_class):
+    def is_empty(driver, target_class):
         data_classifications = 'base weapon trinket bait'.split()
         if target_class not in data_classifications:
             print(f"Error changing setup - target class not found: <{target_class}>")
             return
 
-        target = self.find_element_by_class_name(target_class)
+        target = driver.find_element_by_class_name(target_class)
         target_empty = "empty" in target.get_attribute("class").split()
         return target_empty
 
-    def get_setup(self, target_class):
+    def get_setup(driver, target_class):
         data_classifications = 'base weapon trinket bait'.split()
         assert target_class in data_classifications, f'Error changing setup - target class not found: <{target_class}>'
 
         css_class = f'.campPage-trap-armedItem.{target_class}'
-        item_image = self.find_element_by_css_selector(css_class)
+        item_image = driver.find_element_by_css_selector(css_class)
         item_image.click()
 
         item_class = 'campPage-trap-itemBrowser-item-name'
-        WebDriverWait(self, 60).until(
+        WebDriverWait(driver, 60).until(
             EC.presence_of_element_located((By.CLASS_NAME, item_class))
         )
-        item_name = self.find_element_by_class_name(item_class).text
+        item_name = driver.find_element_by_class_name(item_class).text
 
-        self.get(self.game_url)
+        driver.get(driver.game_url)
         return item_name
 
-    def change_setup(self, target_class, target_name):
+    def change_setup(driver, target_class, target_name):
         print('Change setup', target_class, target_name)
 
         data_classifications = 'base weapon trinket bait'.split()
         assert target_class in data_classifications, f'Error changing setup - target class not found: <{target_class}>'
 
         css_class = f'.campPage-trap-armedItem.{target_class}'
-        item_image = self.find_element_by_css_selector(css_class)
+        item_image = driver.find_element_by_css_selector(css_class)
         item_image.click()
 
         item_class = 'campPage-trap-itemBrowser-item-name'
-        WebDriverWait(self, 60).until(
+        WebDriverWait(driver, 60).until(
             EC.presence_of_element_located((By.CLASS_NAME, item_class))
         )
-        armed_item = self.find_element_by_class_name('campPage-trap-itemBrowser-armed')
+        armed_item = driver.find_element_by_class_name('campPage-trap-itemBrowser-armed')
         armed_item_name = armed_item.find_element_by_class_name(item_class).text
         if armed_item_name == target_name:
-            self.get(self.game_url)
+            driver.get(driver.game_url)
             return
 
-        all_items = self.find_elements_by_class_name('campPage-trap-itemBrowser-item')
+        all_items = driver.find_elements_by_class_name('campPage-trap-itemBrowser-item')
         for item in all_items:
             item_name = item.find_element_by_class_name(item_class).text
             if item_name == target_name:
                 item.find_element_by_tag_name('a').click()
                 break
 
-        self.get(self.game_url)
+        driver.get(driver.game_url)
 
