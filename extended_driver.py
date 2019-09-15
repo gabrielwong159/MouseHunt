@@ -25,15 +25,24 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
 
     def sound_the_horn(driver):
         super().sound_the_horn()
-        # check for empty bait
-        if driver.is_empty('bait'):
-            driver.change_setup('bait', 'Gouda Cheese')
-            driver.messager.notify_message('Bait empty')
 
+        driver.check_bait()
         driver.check_warpath()
         driver.check_bwrift()
         driver.check_egg_charge()
-    
+
+    def check_bait(driver):
+        if driver.is_empty('bait'):
+            driver.messager.notify_message('Bait empty')
+
+            curr_location = driver.get_current_location()
+            rift_locations = ['Gnawnia Rift', 'Burroughs Rift', ' Whisker Wood...',
+                              'Furoma Rift', 'Bristle Woods...']
+            if curr_location in rift_locations:
+                driver.change_setup('bait', 'Brie String Cheese')
+            else:
+                driver.change_setup('bait', 'Gouda Cheese')
+
     def check_labyrinth_entrance(driver, text):
         if 'entrance' in text:
             driver.change_setup('bait', 'Gouda Cheese')

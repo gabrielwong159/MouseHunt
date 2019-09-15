@@ -110,6 +110,10 @@ class MouseHuntDriver(webdriver.Chrome):
                 text = element.text.strip()
                 if text: print(text)
 
+    def get_current_location(driver):
+        elem = driver.find_element_by_id('hud_location')
+        return elem.text
+
     def travel(driver, location):
         driver.get(driver.travel_url)
         map_regions = driver.find_elements_by_class_name("travelPage-map-region-name")
