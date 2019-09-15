@@ -8,7 +8,7 @@ A sample of 10 images was collected for initial testing.
 
 Simple inspection shows that the captchas always contained 5 characters of the same font, with 4 randomly placed lines. Furthermore, the main text had 2 possible font colours, while the colours of each of the 4 lines were always the same.
 
-<div align="center"><img src="images/original.jpg"><img src="images/processed.png"><br><i>Example of original and processed images</i></div>
+<div align="center"><img src="assets/images/original.jpg"><img src="assets/images/processed.png"><br><i>Example of original and processed images</i></div>
 
 Images were first converted to grayscale and binary thresholded. In order to remove the lines, the images were then eroded, as the lines were thinner. Subsequent dilation restored the original characters.
 
