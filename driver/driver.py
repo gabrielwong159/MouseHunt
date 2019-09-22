@@ -43,6 +43,10 @@ class MouseHuntDriver(webdriver.Chrome):
         login_div.find_element_by_class_name("actionButton").click()
         print("Logged in")
         driver.get(driver.game_url)
+
+        WebDriverWait(driver, 10).until(
+            EC.title_contains("Hunter's Camp")
+        )
         print("Ready")
 
     def sound_the_horn(driver):
