@@ -11,6 +11,19 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
 
     def get_latest_entry(driver):
         text = super().get_latest_entry()
+        driver.check_all(text)
+        return text
+
+    def check_all(driver, text):
+        driver.check_triggers(text)
+        driver.check_bait(text)
+
+        driver.check_labyrinth_entrance(text)
+        driver.check_warpath(text)
+        driver.check_bwrift(text)
+        driver.check_egg_charge(text)
+
+    def check_triggers(driver, text):
         # check journal entry for any trigger words
         with open('triggers.txt',  'r') as f:
             s = f.read()
@@ -20,18 +33,9 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
                 if word in text:
                     driver.messager.notify_message(text)
                     break
-        driver.check_labyrinth_entrance(text)
         return text
 
-    def sound_the_horn(driver):
-        super().sound_the_horn()
-
-        driver.check_bait()
-        driver.check_warpath()
-        driver.check_bwrift()
-        driver.check_egg_charge()
-
-    def check_bait(driver):
+    def check_bait(driver, text):
         if driver.is_empty('bait'):
             driver.messager.notify_message('Bait empty')
 
@@ -47,7 +51,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         if 'entrance' in text:
             driver.change_setup('bait', 'Gouda Cheese')
 
-    def check_warpath(driver):
+    def check_warpath(driver, text):
         try:
             elem = driver.find_element_by_class_name('warpathHUD-streak-quantity')
         except NoSuchElementException:
@@ -66,7 +70,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             # driver.change_setup('trinket', "Super Warpath Commander's Charm")
             driver.messager.notify_message(streak)
 
-    def check_bwrift(driver):
+    def check_bwrift(driver, text):
         def enter_portal(portal):
             portal.click()
             action_buttons = driver.find_elements_by_class_name('mousehuntActionButton')
@@ -128,7 +132,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
                       f'Chosen portal: {chosen_portal}'
             driver.messager.notify_message(message)
 
-    def check_egg_charge(driver):
+    def check_egg_charge(driver, text):
         try:
             charge_qty_elem = driver.find_element_by_class_name('springHuntHUD-charge-quantity')
         except NoSuchElementException:
