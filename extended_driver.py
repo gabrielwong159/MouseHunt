@@ -67,8 +67,27 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             driver.messager.notify_message(streak)
 
     def check_bwrift(driver):
+        def enter_portal(portal):
+            portal.click()
+            action_buttons = driver.find_elements_by_class_name('mousehuntActionButton')
+            for button in action_buttons:
+                if button.text == 'Enter Portal':
+                    button.click()
+                    break
+
         try:
-            elem = driver.find_element_by_class_name('riftBristleWoodsHUD-chamberProgressQuantity')
+            entrance_chamber_css = ('.riftBristleWoodsHUD-portal'
+                                    '.riftBristleWoodsHUD-chamberSpecificTextContainer'
+                                    '.entrance_chamber')
+            elem = driver.find_element_by_css_selector(entrance_chamber_css)
+            enter_portal(elem)
+            return
+        except NoSuchElementException:
+            pass
+
+        try:
+            chamber_progress_hud_css = 'riftBristleWoodsHUD-chamberProgressQuantity'
+            elem = driver.find_element_by_class_name(chamber_progress_hud_css)
         except NoSuchElementException:
             return
 
@@ -84,14 +103,6 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             portals = portal_container.find_elements_by_class_name('riftBristleWoodsHUD-portal')
             portal_names = [portal.find_element_by_class_name('riftBristleWoodsHUD-portal-name').text
                             for portal in portals]
-
-            def enter_portal(portal):
-                portal.click()
-                action_buttons = driver.find_elements_by_class_name('mousehuntActionButton')
-                for button in action_buttons:
-                    if button.text == 'Enter Portal':
-                        button.click()
-                        break
 
             important_portals = ['Guard Barracks', 'Security Chamber',
                                  'Frozen Alcove', 'Furnace Room',
