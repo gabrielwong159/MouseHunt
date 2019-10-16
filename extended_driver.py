@@ -1,63 +1,78 @@
 import os
-from util.driver import MouseHuntDriver
 from selenium.common.exceptions import NoSuchElementException
-from util.telegram import notify_message
+
+import config
+from driver import MouseHuntDriver
+from telebot import BotMessager
 
 
 class ExtendedMouseHuntDriver(MouseHuntDriver):
-    def get_latest_entry(self):
+    def __init__(driver, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        driver.messager = BotMessager(*config.get_telegram())
+
+    def get_latest_entry(driver):
         text = super().get_latest_entry()
-        self.check_triggers(text)
+        driver.check_triggers(text)
         return text
 
-    def check_triggers(self, text):
+    def check_triggers(driver, text):
         # check journal entry for any trigger words
         if 'TRIGGERS' in os.environ:
             triggers = os.environ['TRIGGERS'].split(',')
             for word in triggers:
                 if word in text:
-                    notify_message(text)
+                    driver.messager.notify_message(text)
                     break
-        self.check_labyrinth_entrance(text)
+        driver.check_labyrinth_entrance(text)
         return text
 
-    def sound_the_horn(self):
+    def sound_the_horn(driver):
         super().sound_the_horn()
-        # check for empty bait
-        if self.is_empty('bait'):
-            self.change_setup('bait', 'Gouda Cheese')
-            notify_message('Bait empty')
 
-        self.check_warpath()
-        self.check_bwrift()
-        self.check_egg_charge()
-    
-    def check_labyrinth_entrance(self, text):
+        driver.check_bait()
+        driver.check_warpath()
+        driver.check_bwrift()
+        driver.check_egg_charge()
+
+    def check_bait(driver):
+        if driver.is_empty('bait'):
+            driver.messager.notify_message('Bait empty')
+
+            curr_location = driver.get_current_location()
+            rift_locations = ['Gnawnia Rift', 'Burroughs Rift', ' Whisker Wood...',
+                              'Furoma Rift', 'Bristle Woods...']
+            if curr_location in rift_locations:
+                driver.change_setup('bait', 'Brie String Cheese')
+            else:
+                driver.change_setup('bait', 'Gouda Cheese')
+
+    def check_labyrinth_entrance(driver, text):
         if 'entrance' in text:
-            self.change_setup('bait', 'Gouda Cheese')
+            driver.change_setup('bait', 'Gouda Cheese')
 
-    def check_warpath(self):
+    def check_warpath(driver):
         try:
-            elem = self.find_element_by_class_name('warpathHUD-streak-quantity')
+            elem = driver.find_element_by_class_name('warpathHUD-streak-quantity')
         except NoSuchElementException:
             return
 
         # if charm is empty, just used a commander, replace with something
-        if self.is_empty('trinket'):
-            self.change_setup('trinket', 'Warpath Scout Charm')
-            notify_message('charm empty')
+        if driver.is_empty('trinket'):
+            driver.change_setup('trinket', 'Warpath Scout Charm')
+            driver.messager.notify_message('charm empty')
         # if streak is high, switch to commander
         try:
             streak = int(elem.text)
         except ValueError:
             streak = 0
         if streak >= 6:
-            # self.change_setup('trinket', "Super Warpath Commander's Charm")
-            notify_message(streak)
+            # driver.change_setup('trinket', "Super Warpath Commander's Charm")
+            driver.messager.notify_message(streak)
 
-    def check_bwrift(self):
+    def check_bwrift(driver):
         try:
-            elem = self.find_element_by_class_name('riftBristleWoodsHUD-chamberProgressQuantity')
+            elem = driver.find_element_by_class_name('riftBristleWoodsHUD-chamberProgressQuantity')
         except NoSuchElementException:
             return
 
@@ -69,14 +84,14 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             return
 
         if notify:
-            portal_container = self.find_element_by_class_name('riftBristleWoodsHUD-portalContainer')
+            portal_container = driver.find_element_by_class_name('riftBristleWoodsHUD-portalContainer')
             portals = portal_container.find_elements_by_class_name('riftBristleWoodsHUD-portal')
             portal_names = [portal.find_element_by_class_name('riftBristleWoodsHUD-portal-name').text
                             for portal in portals]
 
             def enter_portal(portal):
                 portal.click()
-                action_buttons = self.find_elements_by_class_name('mousehuntActionButton')
+                action_buttons = driver.find_elements_by_class_name('mousehuntActionButton')
                 for button in action_buttons:
                     if button.text == 'Enter Portal':
                         button.click()
@@ -89,9 +104,9 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             chosen_portal = None
             if all(portal not in portal_names for portal in important_portals):
                 portal_priority = ['Lucky Tower', 'Hidden Treasury',
-                                    'Timewarp Chamber',
-                                    'Ancient Lab', 'Runic Laboratory',
-                                    'Gearworks']
+                                   'Timewarp Chamber',
+                                   'Ancient Lab', 'Runic Laboratory',
+                                   'Gearworks']
                 for chosen_portal in portal_priority:
                     try:
                         idx = portal_names.index(chosen_portal)
@@ -104,29 +119,29 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             message = f'BW rift \n' \
                       f'Portals found: {portal_names} \n' \
                       f'Chosen portal: {chosen_portal}'
-            notify_message(message)
+            driver.messager.notify_message(message)
 
-    def check_egg_charge(self):
+    def check_egg_charge(driver):
         try:
-            charge_qty_elem = self.find_element_by_class_name('springHuntHUD-charge-quantity')
+            charge_qty_elem = driver.find_element_by_class_name('springHuntHUD-charge-quantity')
         except NoSuchElementException:
             return
 
         charge = charge_qty_elem.find_element_by_tag_name('span').text
         charge = int(charge)
 
-        curr_charm = self.get_setup('trinket')
+        curr_charm = driver.get_setup('trinket')
         curr_state = 'Up' if 'Charge' in curr_charm else 'Down'
 
         print(curr_state, charge)
         if curr_state == 'Up':
             if charge == 20:
                 print('Going down')
-                self.change_setup('trinket', 'Eggstra Charm')
-                self.change_setup('bait', 'Marshmallow Monterey')
+                driver.change_setup('trinket', 'Eggstra Charm')
+                driver.change_setup('bait', 'Marshmallow Monterey')
         else:
             if charge <= 17:
                 print('Going up')
-                self.change_setup('trinket', 'Eggscavator Charge Charm')
-                self.change_setup('bait', 'Gouda Cheese')
+                driver.change_setup('trinket', 'Eggscavator Charge Charm')
+                driver.change_setup('bait', 'Gouda Cheese')
 
