@@ -49,12 +49,14 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
 
     def check_labyrinth_entrance(driver, text):
         if 'entrance' in text:
+            print('Labyrinth entrance detected')
             driver.change_setup('bait', 'Gouda Cheese')
 
     def check_warpath(driver, text):
         try:
             elem = driver.find_element_by_class_name('warpathHUD-streak-quantity')
         except NoSuchElementException:
+            print('Warpath check failed')
             return
 
         # if charm is empty, just used a commander, replace with something
@@ -64,6 +66,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         # if streak is high, switch to commander
         try:
             streak = int(elem.text)
+            print(f'Warpath streak found: {streak}')
         except ValueError:
             streak = 0
         if streak >= 6:
@@ -93,10 +96,12 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             chamber_progress_hud_css = 'riftBristleWoodsHUD-chamberProgressQuantity'
             elem = driver.find_element_by_class_name(chamber_progress_hud_css)
         except NoSuchElementException:
+            print('BW rift check failed')
             return
 
         try:
             curr, total = elem.text.split('/')
+            print(f'BW rift check: {curr}/{total}')
             notify = int(curr) == 0
         except ValueError as e:
             print(elem.text, e)
@@ -107,6 +112,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             portals = portal_container.find_elements_by_class_name('riftBristleWoodsHUD-portal')
             portal_names = [portal.find_element_by_class_name('riftBristleWoodsHUD-portal-name').text
                             for portal in portals]
+            print('BW rift all portals:', portal_names)
 
             important_portals = ['Guard Barracks', 'Security Chamber',
                                  'Frozen Alcove', 'Furnace Room',
@@ -136,6 +142,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         try:
             charge_qty_elem = driver.find_element_by_class_name('springHuntHUD-charge-quantity')
         except NoSuchElementException:
+            print('Egg hunt check failed')
             return
 
         charge = charge_qty_elem.find_element_by_tag_name('span').text
@@ -144,7 +151,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         curr_charm = driver.get_setup('trinket')
         curr_state = 'Up' if 'Charge' in curr_charm else 'Down'
 
-        print(curr_state, charge)
+        print('Egg hunt status:', curr_state, charge)
         if curr_state == 'Up':
             if charge == 20:
                 print('Going down')
