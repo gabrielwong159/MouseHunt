@@ -181,6 +181,9 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
 
         n_snow = int(hud.find_element_by_css_selector(f'.{hud_name}-itemGroup.recycle').text)
 
+        print(f'GWH check <canClaim: {can_claim}, canBuild: {can_build},'
+              f'head: {n_head}, torso: {n_torso}, limb: {n_limb}>')
+
         message = ''
         if can_claim:
             message += 'Golem claimable\n'
