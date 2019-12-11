@@ -22,6 +22,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         driver.check_warpath(text)
         driver.check_bwrift(text)
         driver.check_egg_charge(text)
+        driver.check_winter_hunt_2019(text)
 
     def check_triggers(driver, text):
         # check journal entry for any trigger words
@@ -163,3 +164,30 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
                 driver.change_setup('trinket', 'Eggscavator Charge Charm')
                 driver.change_setup('bait', 'Gouda Cheese')
 
+    def check_winter_hunt_2019(driver, text: str) -> None:
+        hud_name = 'winterHunt2019HUD'
+        try:
+            hud = driver.find_element_by_class_name(hud_name)
+        except NoSuchElementException:
+            return
+
+        golem_builders = hud.find_elements_by_class_name(f'{hud_name}-golemBuilder')
+        can_claim = any('canClaim' in elem.get_attribute('class') for elem in golem_builders)
+        can_build = any('canBuild' in elem.get_attribute('class') for elem in golem_builders)
+
+        hud_parts = hud.find_element_by_css_selector(f'.{hud_name}-itemGroup.parts')
+        n_head, n_torso, n_limb = (int(elem.text) for elem in
+                                   hud_parts.find_elements_by_class_name(f'{hud_name}-itemGroup-item'))
+
+        n_snow = int(hud.find_element_by_css_selector(f'.{hud_name}-itemGroup.recycle').text)
+
+        print(f'GWH check <canClaim: {can_claim}, canBuild: {can_build},'
+              f'head: {n_head}, torso: {n_torso}, limb: {n_limb}>')
+
+        message = ''
+        if can_claim:
+            message += 'Golem claimable\n'
+        if can_build:
+            message += f'Golem buildable <head={n_head}, torso={n_torso}, limb={n_limb}>'
+        if len(message) > 0:
+            driver.messager.notify_message(message)
