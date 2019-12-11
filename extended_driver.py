@@ -41,8 +41,8 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
 
             curr_location = driver.get_current_location()
             rift_locations = ['Gnawnia Rift', 'Burroughs Rift', ' Whisker Wood...',
-                              'Furoma Rift', 'Bristle Woods...']
-            if curr_location in rift_locations:
+                              'Furoma Rift', 'Bristle Woods...', 'Valour Rift']
+            if curr_location in rift_locations or 'Rift' in curr_location:  # for forward compatibility
                 driver.change_setup('bait', 'Brie String Cheese')
             else:
                 driver.change_setup('bait', 'Gouda Cheese')
@@ -122,7 +122,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
             if all(portal not in portal_names for portal in important_portals):
                 portal_priority = ['Lucky Tower', 'Hidden Treasury',
                                    'Timewarp Chamber',
-                                   'Ancient Lab', 'Runic Laboratory',
+                                   'Runic Laboratory', 'Ancient Lab',
                                    'Gearworks']
                 for chosen_portal in portal_priority:
                     try:
