@@ -185,5 +185,6 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
         if can_claim:
             message += 'Golem claimable\n'
         if can_build:
-            message += f'Golem buildable: (head={n_head}, torso={n_torso}, limb={n_limb})'
-        driver.messager.notify_message(message)
+            message += f'Golem buildable <head={n_head}, torso={n_torso}, limb={n_limb}>'
+        if len(message) > 0:
+            driver.messager.notify_message(message)
