@@ -119,7 +119,10 @@ class MouseHuntDriver(webdriver.Chrome):
                 if text: print(text)
 
     def get_current_location(driver):
-        elem = driver.find_element_by_id('hud_location')
+        try:
+            elem = driver.find_element_by_id('hud_location')
+        except NoSuchElementException:
+            elem = driver.find_element_by_class_name('mousehuntHud-environmentName')
         return elem.text
 
     def travel(driver, location):
