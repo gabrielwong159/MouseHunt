@@ -120,7 +120,9 @@ class MouseHuntDriver(webdriver.Chrome):
 
     def get_current_location(driver):
         try:
-            elem = driver.find_element_by_id('hud_location')
+            elem = driver.find_element_by_id('mousehuntHud') \
+                         .find_element_by_id('hud_statList1') \
+                         .find_element_by_css_selector('a[data-page="Travel"]')
         except NoSuchElementException:
             elem = driver.find_element_by_class_name('mousehuntHud-environmentName')
         return elem.text
