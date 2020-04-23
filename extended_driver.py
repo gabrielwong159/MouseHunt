@@ -17,6 +17,7 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
     def check_all(driver, text):
         driver.check_triggers(text)
         driver.check_bait(text)
+        driver.check_setup(text)
 
         driver.check_labyrinth_entrance(text)
         driver.check_warpath(text)
@@ -47,6 +48,37 @@ class ExtendedMouseHuntDriver(MouseHuntDriver):
                 driver.change_setup('bait', 'Brie String Cheese')
             else:
                 driver.change_setup('bait', 'Gouda Cheese')
+
+    def check_setup(driver, text):
+        location = driver.get_current_location()
+        base = driver.get_setup('base')
+        message = f'Check trap: {location}, {base}'
+
+        if location == 'Queso River':
+            if not base.startswith('Overgrown Ember'):
+                driver.messager.notify_message(message)
+        elif location == 'Iceberg':
+            possible_bases = [
+                'Ultimate Iceberg',
+                'Deep Freeze',
+                'Magnet Base',
+                'Spiked Base',
+                'Remote Deto',
+                'Hearthstone'
+            ]
+            if not any(base.startswith(s) for s in possible_bases):
+                driver.messager.notify_message(message)
+        elif location == 'Furoma Rift':
+            if not base.startswith('Attuned Enerchi'):
+                driver.messager.notify_message(message)
+        elif location in ['Muridae Market', 'Fiery Warpath']:
+            if not base == 'Desert Heater Base':
+                driver.messager.notify_message(message)
+        elif location in ['Twisted Garden', 'Sand Crypts', 'Cursed City']:
+            charm = driver.get_setup('trinket')
+            boss = charm in ['Shattering Charm', 'Grub Scent Charm']
+            if not boss and not base in ['Living Base', 'Hothouse Base', 'Desert Heater Base']:
+                driver.messager.notify_message(message)
 
     def check_labyrinth_entrance(driver, text):
         if 'entrance' in text:
