@@ -1,3 +1,4 @@
+import time
 import config
 from extended_driver import ExtendedMouseHuntDriver
 
@@ -20,6 +21,10 @@ def main():
     try:
         driver = ExtendedMouseHuntDriver(headless=True, trap_check=trap_check)
         driver.login(username, password)
+
+        s = driver.execute_script('return user')['next_activeturn_seconds']
+        time.sleep(s + 5)
+
         while True:
             driver.sound_the_horn()
             driver.wait_for_next_horn()
