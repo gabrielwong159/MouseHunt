@@ -119,13 +119,8 @@ class MouseHuntDriver(webdriver.Chrome):
                 if text: print(text)
 
     def get_current_location(driver):
-        try:
-            elem = driver.find_element_by_id('mousehuntHud') \
-                         .find_element_by_id('hud_statList1') \
-                         .find_element_by_css_selector('a[data-page="Travel"]')
-        except NoSuchElementException:
-            elem = driver.find_element_by_class_name('mousehuntHud-environmentName')
-        return elem.text
+        user = driver.execute_script('return user')
+        return user['environment_name']
 
     def travel(driver, location):
         driver.get(driver.travel_url)
@@ -148,31 +143,22 @@ class MouseHuntDriver(webdriver.Chrome):
         driver.get(driver.game_url)  # fallback when not found (or already at location)
 
     def is_empty(driver, target_class):
+        return driver.get_setup(target_class) is None
+
+    def get_setup(driver, target_class):
         data_classifications = 'base weapon trinket bait'.split()
         if target_class not in data_classifications:
             print(f"Error changing setup - target class not found: <{target_class}>")
             return
 
-        target = driver.find_element_by_class_name(target_class)
-        target_empty = "empty" in target.get_attribute("class").split()
-        return target_empty
+        user = driver.execute_script('return user')
 
-    def get_setup(driver, target_class):
-        data_classifications = 'base weapon trinket bait'.split()
-        assert target_class in data_classifications, f'Error changing setup - target class not found: <{target_class}>'
+        if target_class == 'bait':  # empty bait name is 0
+            if user['bait_quantity'] == 0:
+                return None
 
-        css_class = f'.campPage-trap-armedItem.{target_class}'
-        item_image = driver.find_element_by_css_selector(css_class)
-        item_image.click()
-
-        item_class = 'campPage-trap-itemBrowser-item-name'
-        WebDriverWait(driver, 60).until(
-            EC.presence_of_element_located((By.CLASS_NAME, item_class))
-        )
-        item_name = driver.find_element_by_class_name(item_class).text
-
-        driver.get(driver.game_url)
-        return item_name
+        key = f'{target_class}_name'
+        return user[key]
 
     def change_setup(driver, target_class, target_name):
         print('Change setup', target_class, target_name)
