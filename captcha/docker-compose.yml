@@ -1,0 +1,9 @@
+version: '3.3'
+
+services:
+  captcha:
+    build: .
+    image: mh-captcha-solver:latest
+    container_name: mh_captcha_solver
+    ports:
+      - "8080:80"
