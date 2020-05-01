@@ -7,6 +7,8 @@ from typing import List
 from bot import Bot
 
 MAX_DELAY = 200
+TRAP_CHECK_PRIORITY = 1
+HORN_PRIORITY = 2
 
 
 def main():
@@ -15,13 +17,14 @@ def main():
     bot = Bot(username, password, trap_check=45)
 
     s = sched.scheduler(time.time, time.sleep)
-    s.enter(delay=0, priority=1, action=trap_check_loop, argument=(bot, s))
-    s.enter(delay=0, priority=2, action=horn_loop, argument=(bot, s))
+    s.enter(delay=0, priority=TRAP_CHECK_PRIORITY, action=trap_check_loop, argument=(bot, s))
+    s.enter(delay=0, priority=HORN_PRIORITY, action=horn_loop, argument=(bot, s))
     s.run()
 
 
 def horn_loop(bot: Bot, s: sched.scheduler):
     bot.refresh_sess()
+    bot.check_and_solve_captcha()
 
     secs_to_next_hunt = bot.get_user_data()['next_activeturn_seconds']
     if secs_to_next_hunt > 0:
@@ -37,12 +40,13 @@ def horn_loop(bot: Bot, s: sched.scheduler):
     next_hunt_dt = datetime.now() + timedelta(seconds=total_delay)
     print('time of next hunt:', next_hunt_dt.strftime('%Y-%m-%d %T'))
 
-    s.enter(delay=total_delay, priority=2, action=horn_loop, argument=(bot, s))
+    s.enter(delay=total_delay, priority=HORN_PRIORITY, action=horn_loop, argument=(bot, s))
     s.run()
 
 
 def trap_check_loop(bot: Bot, s: sched.scheduler):
     bot.refresh_sess()
+    bot.check_and_solve_captcha()
 
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:
@@ -59,7 +63,7 @@ def trap_check_loop(bot: Bot, s: sched.scheduler):
     print('time of next trap check:', next_check_dt.strftime('%Y-%m-%d %T'))
 
     secs_to_next_check = (next_check_dt - datetime.now()).total_seconds()
-    s.enter(delay=secs_to_next_check, priority=1, action=trap_check_loop, argument=(bot, s))
+    s.enter(delay=secs_to_next_check, priority=TRAP_CHECK_PRIORITY, action=trap_check_loop, argument=(bot, s))
     s.run()
 
 

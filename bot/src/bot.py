@@ -3,7 +3,7 @@ import re
 import requests
 from requests import Session, Response
 from bs4 import BeautifulSoup
-from typing import Optional, List, Tuple
+from typing import List, Tuple
 
 
 class Bot(object):
@@ -15,8 +15,8 @@ class Bot(object):
         self.trap_check = trap_check
         self.journal_entries = []
 
-        self.sess = self.login()
-        self.get_user_data()  # required after every login
+        self.sess = None
+        self.refresh_sess()
         self.update_journal_entries()
 
     def login(self) -> Session:
@@ -33,6 +33,10 @@ class Bot(object):
             self.raise_res_error(res)
         return sess
 
+    def refresh_sess(self):
+        self.sess = self.login()
+        self.get_user_data()
+
     def get_user_data(self) -> dict:
         user_url = f'{Bot.base_url}/managers/ajax/users/session.php'
         form_data = {
@@ -46,16 +50,13 @@ class Bot(object):
         user_data = json.loads(res.text)['user']
         return user_data
 
-    def horn(self) -> Response:
+    def horn(self):
         horn_url = f'{Bot.base_url}/turn.php'
         res = self.sess.get(horn_url)
         if not res.ok:
             self.raise_res_error(res)
-        return res
 
     def get_page_html(self) -> BeautifulSoup:
-        self.check_and_solve_captcha()
-
         home_url = Bot.base_url
         res = self.sess.get(home_url)
         if not res.ok:
@@ -88,47 +89,37 @@ class Bot(object):
             entries.append('\n'.join((journal_date, journal_text)))
         return entries
 
-    def check_and_solve_captcha(self) -> bool:
+    def check_and_solve_captcha(self):
         user_data = self.get_user_data()
         has_captcha = user_data['has_puzzle']
         if not has_captcha:
-            return False
-
-        captcha_url = self.get_captcha_url()
-        if captcha_url is None:
-            return False
+            return
 
         unique_hash = user_data['unique_hash']
-        self.solve_captcha(captcha_url, unique_hash)
+        self.solve_captcha(unique_hash)
         self.check_and_solve_captcha()  # if wrong answer, image will change, solve again
 
-    def get_captcha_url(self) -> Optional[str]:
-        soup = self.get_page_html()
-        elem = soup.find('div', class_='mousehuntPage-puzzle-form-captcha-image')
-        if elem is None:
-            return
-
-        pattern = r"background-image:url\('(.*?)'\);"
-        match = re.match(pattern, elem['style'])
-        try:
-            return match.group(1)
-        except IndexError:
-            return
-
-    def solve_captcha(self, captcha_url: str, unique_hash: str) -> Response:
+    def solve_captcha(self, unique_hash: str):
+        captcha_url = self.get_captcha_url()
         answer = requests.get('http://localhost:8080', params={'url': captcha_url}).text
         print('captcha', answer)
 
-        url = f'{Bot.base_url}/managers/ajax/users/solvepuzzle.php'
-
-        if len(answer) != 5:  # if bad solution, change image and solve again
+        url = f'{Bot.base_url}/managers/ajax/users/solvePuzzle.php'
+        if len(answer) != 5:
             data = {'newpuzzle': True, 'uh': unique_hash}
             self.sess.post(url, data)
-            return self.solve_captcha(captcha_url, unique_hash)
-        else:
-            data = {'puzzle_answer': answer, 'uh': unique_hash}
-            res = self.sess.post(url, data)
-            return res
+            return self.solve_captcha(unique_hash)
+
+        data = {'puzzle_answer': answer, 'uh': unique_hash}
+        self.sess.post(url, data)
+
+    def get_captcha_url(self) -> str:
+        soup = self.get_page_html()
+        elem = soup.find('div', class_='mousehuntPage-puzzle-form-captcha-image')
+
+        pattern = r"background-image:url\('(.*?)'\);"
+        match = re.match(pattern, elem['style'])
+        return match.group(1)
 
     def raise_res_error(self, res: Response):
         raise Exception(res.text)
