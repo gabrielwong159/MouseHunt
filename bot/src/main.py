@@ -1,9 +1,9 @@
 import os
 import random
+import re
 import sched
 import time
 from datetime import datetime, timedelta
-from typing import List
 from bot import Bot
 
 MAX_DELAY = 200
@@ -14,7 +14,15 @@ HORN_PRIORITY = 2
 def main():
     username = os.environ['MH_USERNAME']
     password = os.environ['MH_PASSWORD']
-    bot = Bot(username, password, trap_check=45)
+    trap_check = int(os.environ['MH_TRAP_CHECK'])
+    keywords = os.environ.get('KEYWORDS')
+
+    if keywords is None:
+        bot = Bot(username, password, trap_check)
+    else:
+        pattern = r',\s*'
+        keywords = [t for s in keywords.split('\n') for t in re.split(pattern, s)]
+        bot = Bot(username, password, trap_check, keywords)
 
     s = sched.scheduler(time.time, time.sleep)
     s.enter(delay=0, priority=TRAP_CHECK_PRIORITY, action=trap_check_loop, argument=(bot, s))
@@ -32,8 +40,7 @@ def horn_loop(bot: Bot, s: sched.scheduler):
         total_delay = secs_to_next_hunt + arbitrary_delay
     else:
         bot.horn()
-        _, updated_entries = bot.update_journal_entries()
-        print_entries(updated_entries)
+        bot.check_entries()
 
         total_delay = 15*60 + random.randint(1, MAX_DELAY)
 
@@ -50,8 +57,7 @@ def trap_check_loop(bot: Bot, s: sched.scheduler):
 
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:
-        _, updated_entries = bot.update_journal_entries()
-        print_entries(updated_entries)
+        bot.check_entries()
 
     if curr_min >= bot.trap_check:
         next_check_hour = datetime.now() + timedelta(hours=1)
@@ -65,11 +71,6 @@ def trap_check_loop(bot: Bot, s: sched.scheduler):
     secs_to_next_check = (next_check_dt - datetime.now()).total_seconds()
     s.enter(delay=secs_to_next_check, priority=TRAP_CHECK_PRIORITY, action=trap_check_loop, argument=(bot, s))
     s.run()
-
-
-def print_entries(entries: List[str]):
-    for entry in entries:
-        print(entry, end='\n\n')
 
 
 if __name__ == '__main__':

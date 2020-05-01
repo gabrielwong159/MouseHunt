@@ -5,11 +5,13 @@ from requests import Session, Response
 from bs4 import BeautifulSoup
 from typing import List, Tuple
 
+import telebot
+
 
 class Bot(object):
     base_url = 'https://www.mousehuntgame.com'
 
-    def __init__(self, username: str, password: str, trap_check: int):
+    def __init__(self, username: str, password: str, trap_check: int, keywords: List[str] = None):
         self.username = username
         self.password = password
         self.trap_check = trap_check
@@ -18,6 +20,8 @@ class Bot(object):
         self.sess = None
         self.refresh_sess()
         self.update_journal_entries()
+
+        self.keywords = [] if keywords is None else keywords
 
     def login(self) -> Session:
         login_url = f'{Bot.base_url}/managers/ajax/pages/login.php'
@@ -62,6 +66,16 @@ class Bot(object):
         if not res.ok:
             self.raise_res_error(res)
         return BeautifulSoup(res.text, 'html.parser')
+
+    def check_entries(self):
+        _, new_entries = self.update_journal_entries()
+        for entry in new_entries:
+            print(entry, end='\n\n')
+
+        for entry in new_entries[::-1]:
+            for keyword in self.keywords:
+                if keyword in entry:
+                    telebot.send_message(entry)
 
     def update_journal_entries(self) -> Tuple[List[str], List[str]]:
         curr = self.journal_entries
