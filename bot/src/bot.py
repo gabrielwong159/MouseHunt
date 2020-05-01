@@ -14,7 +14,7 @@ class Bot(object):
         self.password = password
         self.trap_check = trap_check
 
-    def login(self) -> Tuple[Session, dict]:
+    def login(self) -> Session:
         form_data = {
             'action': 'loginHitGrab',
             'username': self.username,
@@ -24,13 +24,27 @@ class Bot(object):
         login_url = f'{Bot.base_url}/managers/ajax/pages/login.php'
         sess = requests.Session()
         res = sess.post(login_url, form_data)
-        print('login', res.status_code)
+
+        if not res.ok:
+            self.raise_res_error(res)
+
+        return sess
+
+    def get_user_data(self, sess: Session) -> dict:
+        form_data = {
+            'action': 'loginHitGrab',
+            'username': self.username,
+            'password': self.password,
+        }
 
         user_url = f'{Bot.base_url}/managers/ajax/users/session.php'
         res = sess.post(user_url, form_data)
-        print('user data', res.status_code)
+
+        if not res.ok:
+            self.raise_res_error(res)
+
         user_data = json.loads(res.text)['user']
-        return sess, user_data
+        return user_data
 
     def home(self, sess: Session) -> Tuple[Session, Response]:
         home_url = Bot.base_url
@@ -92,3 +106,6 @@ class Bot(object):
             data = {'puzzle_answer': answer, 'uh': unique_hash}
             sess.post(url, data)
             return self.home(sess)
+
+    def raise_res_error(self, res: Response):
+        raise Exception(res.text)
