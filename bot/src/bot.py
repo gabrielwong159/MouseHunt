@@ -54,6 +54,8 @@ class Bot(object):
         return res
 
     def get_page_html(self) -> BeautifulSoup:
+        self.check_and_solve_captcha()
+
         home_url = Bot.base_url
         res = self.sess.get(home_url)
         if not res.ok:
