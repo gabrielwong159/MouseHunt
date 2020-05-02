@@ -16,10 +16,11 @@ class Bot(object):
         self.journal_entries = []
 
         self.sess = None
-        self.refresh_sess()
-        self.update_journal_entries()
+        user_data = self.refresh_sess()
+        self.unique_hash = user_data['unique_hash']
 
         self.keywords = [] if keywords is None else keywords
+        self.update_journal_entries()
 
     def login(self) -> Session:
         login_url = f'{Bot.base_url}/managers/ajax/pages/login.php'
@@ -35,9 +36,9 @@ class Bot(object):
             self.raise_res_error(res)
         return sess
 
-    def refresh_sess(self):
+    def refresh_sess(self) -> dict:
         self.sess = self.login()
-        self.get_user_data()
+        return self.get_user_data()
 
     def get_user_data(self) -> dict:
         user_url = f'{Bot.base_url}/managers/ajax/users/session.php'
@@ -97,22 +98,21 @@ class Bot(object):
         if not has_captcha:
             return
 
-        unique_hash = user_data['unique_hash']
-        self.solve_captcha(unique_hash)
+        self.solve_captcha()
         self.check_and_solve_captcha()  # if wrong answer, image will change, solve again
 
-    def solve_captcha(self, unique_hash: str):
+    def solve_captcha(self):
         captcha_url = self.get_captcha_url()
         answer = requests.get('http://localhost:8080', params={'url': captcha_url}).text
         print('captcha', answer)
 
         url = f'{Bot.base_url}/managers/ajax/users/solvePuzzle.php'
         if len(answer) != 5:
-            data = {'newpuzzle': True, 'uh': unique_hash}
+            data = {'newpuzzle': True, 'uh': self.unique_hash}
             self.sess.post(url, data)
-            return self.solve_captcha(unique_hash)
+            return self.solve_captcha()
 
-        data = {'puzzle_answer': answer, 'uh': unique_hash}
+        data = {'puzzle_answer': answer, 'uh': self.unique_hash}
         self.sess.post(url, data)
 
     def get_captcha_url(self) -> str:
