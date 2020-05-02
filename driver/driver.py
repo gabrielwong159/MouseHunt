@@ -46,8 +46,15 @@ class MouseHuntDriver(webdriver.Chrome):
         print("Ready")
 
     def sound_the_horn(driver):
-        driver.get(driver.horn_url)
-        driver.check_captcha()
+        driver.get(driver.game_url)
+
+        next_hunt_secs = driver.execute_script('return user.next_activeturn_seconds')
+        dt = datetime.datetime.now() + datetime.timedelta(seconds=next_hunt_secs)
+        print('next hunt at:', dt.strftime('%T'))
+
+        if next_hunt_secs == 0:
+            driver.get(driver.horn_url)
+            driver.check_captcha()
 
     def check_captcha(driver, n=0):
         try:
@@ -90,11 +97,12 @@ class MouseHuntDriver(webdriver.Chrome):
 
     def wait_for_next_horn(driver):
         offset = random.randint(0, 200)
+        dt = datetime.datetime.now() + datetime.timedelta(seconds=15*60 + offset)
+        print(f'offset: {offset}, next horn: {dt.strftime("%T")}')
+
         offset_per_min = round(offset/15, 2)
-        print("Additional offset:", offset, "dt:", offset_per_min)
         for i in range(15):
             time.sleep(60 + offset_per_min)
-            print(i+1, end=" ", flush=True)
 
             minute = datetime.datetime.now().minute
             if minute == driver.trap_check:
