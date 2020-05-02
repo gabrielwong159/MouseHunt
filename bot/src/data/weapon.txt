@@ -1,0 +1,53 @@
+anniversary_reaper_perch_weapon,Anniversary Reaper's Perch
+2010_blastoff_trap_weapon,2010 Blastoff Trap
+acronym_weapon,Arcane Capturing Rod Of Never Yielding Mystery
+ambrosial_portal_weapon,Ambrosial Portal
+ambush_weapon,Ambush Trap
+ancient_box_trap_weapon,Ancient Box Trap
+ancient_spear_gun_weapon,Ancient Spear Gun
+christmas_cracker_trap_weapon,Christmas Cracker Trap
+chrome_drillbot_weapon,Chrome DrillBot
+chrome_nannybot_weapon,Chrome Nannybot
+clockapult_of_time_weapon,Clockapult of Time
+gingerbread_house_surprise_weapon,Gingerbread House Surprise
+hitgrab_rockin_horse_weapon,HitGrab Rockin' Horse
+ice_maiden_weapon,Ice Maiden
+mouse_mary_onette_weapon,Mouse Mary O'Nette
+mouse_trebuchet_weapon,Mouse Trebuchet
+mutated_venus_mouse_trap_weapon,Mutated Venus Mouse Trap
+nannybot_weapon,Nannybot
+onyx_mallet_weapon,Onyx Mallet
+sinister_portal_weapon,Sinister Portal
+swiss_army_mouse_trap_weapon,Swiss Army Mouse Trap
+tacky_glue_trap_weapon,Tacky Glue Trap
+mystic_low_weapon,Mystic Pawn Pincher
+technic_low_weapon,Technic Pawn Pincher
+zugzwangs_first_move_weapon,Zugzwang's First Move
+enraged_rhinobot_weapon,Enraged RhinoBot
+zurreals_folly_weapon,Zurreal's Folly
+steam_laser_mk_iii_weapon,Steam Laser Mk. III
+phantasmic_oasis_weapon,Phantasmic Oasis Trap
+chrome_monstrobot_weapon,Chrome MonstroBot
+slac_spring_weapon,S.L.A.C.
+forgotten_art_of_dance_weapon,The Forgotten Art of Dance
+crystal_tower_weapon,Crystal Tower
+upgraded_rune_shark_weapon,School of Sharks
+chrome_sphynx_weapon,Chrome Sphynx Wrath
+infinite_labyrinth_weapon,Infinite Labyrinth Trap
+rift_mynorca_weapon,Mysteriously unYielding Null-Onyx Rampart of Cascading Amperes
+anniversary_acronym_weapon,Anniversary Arcane Capturing Rod Of Never Yielding Mystery
+anniversary_ambush_weapon,Anniversary Ambush
+anniversary_ancient_box_trap_weapon,Anniversary Ancient Box Trap
+anniversary_mouse_deathbot_weapon,Anniversary DeathBot
+chrome_storm_wrought_ballista_weapon,Chrome Storm Wrought Ballista Trap
+paradise_falls_weapon,Paradise Falls Trap
+wise_well_of_wisdom_weapon,Well of Wisdom Trap
+admirals_galleon_weapon,Admiral's Galleon Trap
+snow_golem_trap_weapon,Golem Guardian Arcane Trap
+surprise_party_weapon,Surprise Party Trap
+wacky_inflatable_party_people_weapon,Wacky Inflatable Party People Trap
+battering_ram_buster_weapon,Moonbeam Barrier Trap
+cemetery_gate_grappler_weapon,Cemetery Gate Grappler
+chrono_gwh_weapon,Father Winter's Timepiece Trap
+rift_glacier_gatler_weapon,Rift Glacier Gatler
+queso_factory_weapon,Queso Factory Trap
