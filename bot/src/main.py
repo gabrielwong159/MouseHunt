@@ -4,7 +4,7 @@ import re
 import sched
 import time
 from datetime import datetime, timedelta
-from bot import Bot
+from bot_plus import BotPlus as Bot
 
 MAX_DELAY = 200
 TRAP_CHECK_PRIORITY = 1
@@ -40,7 +40,7 @@ def horn_loop(bot: Bot, s: sched.scheduler):
         total_delay = secs_to_next_hunt + arbitrary_delay
     else:
         bot.horn()
-        bot.check_entries()
+        bot.update_journal_entries()
 
         total_delay = 15*60 + random.randint(1, MAX_DELAY)
 
@@ -57,7 +57,7 @@ def trap_check_loop(bot: Bot, s: sched.scheduler):
 
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:
-        bot.check_entries()
+        bot.update_journal_entries()
 
     if curr_min >= bot.trap_check:
         next_check_hour = datetime.now() + timedelta(hours=1)

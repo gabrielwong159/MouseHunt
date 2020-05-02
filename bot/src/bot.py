@@ -5,8 +5,6 @@ from requests import Session, Response
 from bs4 import BeautifulSoup
 from typing import List, Tuple
 
-import telebot
-
 
 class Bot(object):
     base_url = 'https://www.mousehuntgame.com'
@@ -66,16 +64,6 @@ class Bot(object):
         if not res.ok:
             self.raise_res_error(res)
         return BeautifulSoup(res.text, 'html.parser')
-
-    def check_entries(self):
-        _, new_entries = self.update_journal_entries()
-        for entry in new_entries:
-            print(entry, end='\n\n')
-
-        for entry in new_entries[::-1]:
-            for keyword in self.keywords:
-                if keyword in entry:
-                    telebot.send_message(entry)
 
     def update_journal_entries(self) -> Tuple[List[str], List[str]]:
         curr = self.journal_entries
