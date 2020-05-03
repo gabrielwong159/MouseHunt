@@ -17,12 +17,16 @@ def main():
     trap_check = int(os.environ['MH_TRAP_CHECK'])
     keywords = os.environ.get('MH_KEYWORDS')
 
+    captcha_host = os.environ.get('CAPTCHA_HOST', 'localhost')
+    captcha_port = int(os.environ.get('CAPTCHA_PORT', '8080'))
+    captcha_url = f'http://{captcha_host}:{captcha_port}'
+
     if keywords is None:
-        bot = Bot(username, password, trap_check)
+        bot = Bot(username, password, trap_check, captcha_url)
     else:
         pattern = r',\s*'
         keywords = [t for s in keywords.split('\n') for t in re.split(pattern, s)]
-        bot = Bot(username, password, trap_check, keywords)
+        bot = Bot(username, password, trap_check, captcha_url, keywords)
 
     s = sched.scheduler(time.time, time.sleep)
     s.enter(delay=0, priority=TRAP_CHECK_PRIORITY, action=trap_check_loop, argument=(bot, s))

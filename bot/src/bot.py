@@ -6,13 +6,17 @@ from bs4 import BeautifulSoup
 from typing import List, Tuple
 
 
+
 class Bot(object):
     base_url = 'https://www.mousehuntgame.com'
 
-    def __init__(self, username: str, password: str, trap_check: int, keywords: List[str] = None):
+    def __init__(self, username: str, password: str, trap_check: int,
+                 captcha_solver_url: str, keywords: List[str] = None):
         self.username = username
         self.password = password
         self.trap_check = trap_check
+        self.captcha_solver_url = captcha_solver_url
+
         self.journal_entries = None
         self.last_read_journal_entry_id = None
 
@@ -84,8 +88,12 @@ class Bot(object):
         return new, diff
 
     def get_journal_entries(self) -> Tuple[List[str], int]:
+        self.check_and_solve_captcha()
         soup = self.get_page_soup()
         journal_entries = soup.find_all('div', class_='entry')
+
+        if len(journal_entries) == 0:
+            return [], None
         last_read_journal_entry_id = int(journal_entries[0].get('data-entry-id'))
 
         entries = []
@@ -109,7 +117,7 @@ class Bot(object):
 
     def solve_captcha(self):
         captcha_url = self.get_captcha_url()
-        answer = requests.get('http://localhost:8080', params={'url': captcha_url}).text
+        answer = requests.get(self.captcha_solver_url, params={'url': captcha_url}).text
         print('captcha', answer)
 
         url = f'{Bot.base_url}/managers/ajax/users/solvePuzzle.php'
