@@ -18,10 +18,8 @@ class BotPlus(Bot):
         return all_entries, new_entries
 
     def check_entries(self, new_entries):
-        for entry in new_entries:
-            print(entry, end='\n\n')
-
         for entry in new_entries[::-1]:
+            print(entry, end='\n\n')
             for keyword in self.keywords:
                 if keyword in entry:
                     telebot.send_message(entry)
@@ -92,7 +90,7 @@ class BotPlus(Bot):
         data = {'unique_hash': self.unique_hash, 'classification': classification}
         res = self.sess.post(url, data=data)
 
-        components = json.loads(res)['components']
+        components = json.loads(res.text)['components']
         available_components = [component['type'] for component in components]
         if item_key not in available_components:
             telebot.send_message(f'cannot find {classification}: {item_key}')
