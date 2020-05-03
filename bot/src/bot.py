@@ -13,7 +13,8 @@ class Bot(object):
         self.username = username
         self.password = password
         self.trap_check = trap_check
-        self.journal_entries = []
+        self.journal_entries = None
+        self.last_read_journal_entry_id = None
 
         self.sess = None
         user_data = self.refresh_sess()
@@ -59,7 +60,7 @@ class Bot(object):
         if not res.ok:
             self.raise_res_error(res)
 
-    def get_page_html(self) -> BeautifulSoup:
+    def get_page_soup(self) -> BeautifulSoup:
         home_url = Bot.base_url
         res = self.sess.get(home_url)
         if not res.ok:
@@ -68,19 +69,24 @@ class Bot(object):
 
     def update_journal_entries(self) -> Tuple[List[str], List[str]]:
         curr = self.journal_entries
-        new = self.get_journal_entries()
+        new, last_read_journal_entry_id = self.get_journal_entries()
 
-        ptr = 0
-        while ptr < len(new) and new[ptr] not in curr:
-            ptr += 1
-        diff = new[:ptr]
+        if curr is None:  # skip diff check at initial startup
+            diff = []
+        else:
+            ptr = 0
+            while ptr < len(new) and new[ptr] not in curr:
+                ptr += 1
+            diff = new[:ptr]
 
         self.journal_entries = new
+        self.last_read_journal_entry_id = last_read_journal_entry_id
         return new, diff
 
-    def get_journal_entries(self) -> List[str]:
-        soup = self.get_page_html()
+    def get_journal_entries(self) -> Tuple[List[str], int]:
+        soup = self.get_page_soup()
         journal_entries = soup.find_all('div', class_='entry')
+        last_read_journal_entry_id = int(journal_entries[0].get('data-entry-id'))
 
         entries = []
         for elem in journal_entries:
@@ -90,7 +96,7 @@ class Bot(object):
             journal_text = BeautifulSoup(str(journal_text_elem).replace('<br/>', '\n'), 'html.parser').text
 
             entries.append('\n'.join((journal_date, journal_text)))
-        return entries
+        return entries, last_read_journal_entry_id
 
     def check_and_solve_captcha(self):
         user_data = self.get_user_data()
@@ -116,7 +122,7 @@ class Bot(object):
         self.sess.post(url, data)
 
     def get_captcha_url(self) -> str:
-        soup = self.get_page_html()
+        soup = self.get_page_soup()
         elem = soup.find('div', class_='mousehuntPage-puzzle-form-captcha-image')
 
         pattern = r"background-image:url\('(.*?)'\);"
