@@ -9,6 +9,10 @@ class BotPlus(Bot):
 
         self.check_entries(new_entries)
 
+        user_data = self.get_user_data()
+        self.check_bait_empty(user_data)
+        self.check_location_setup(user_data)
+
         return all_entries, new_entries
 
     def check_entries(self, new_entries):
@@ -20,8 +24,7 @@ class BotPlus(Bot):
                 if keyword in entry:
                     telebot.send_message(entry)
 
-    def check_bait_empty(self):
-        user_data = self.get_user_data()
+    def check_bait_empty(self, user_data: dict):
         bait_qty = user_data['bait_quantity']
         if bait_qty > 0:
             return
@@ -32,6 +35,20 @@ class BotPlus(Bot):
         else:
             self.change_trap('bait', 'gouda_cheese')
         telebot.send_message('bait empty')
+
+    def check_location_setup(self, user_data: dict):
+        # iceberg, muridae, living garden
+        location = user_data['environment_name']
+        base = user_data['base_name']
+        bait = user_data['bait_name']
+
+        incorrect_queso = (location == 'Queso River' and
+                           base != 'Overgrown Ember Stone Base' and
+                           bait != 'Wildfire Queso')
+        incorrect_frift = (location == 'Furoma Rift' and
+                           base != 'Attuned Enerchi Induction Base')
+        if any([incorrect_queso, incorrect_frift]):
+            telebot.send_message(f'Not using {base} in {location}')
 
     def change_trap(self, classification: str, item_key: str):
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']

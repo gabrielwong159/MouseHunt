@@ -15,7 +15,7 @@ def main():
     username = os.environ['MH_USERNAME']
     password = os.environ['MH_PASSWORD']
     trap_check = int(os.environ['MH_TRAP_CHECK'])
-    keywords = os.environ.get('KEYWORDS')
+    keywords = os.environ.get('MH_KEYWORDS')
 
     if keywords is None:
         bot = Bot(username, password, trap_check)
