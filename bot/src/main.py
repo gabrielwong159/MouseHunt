@@ -36,17 +36,17 @@ def main():
 
 def horn_loop(bot: Bot, s: sched.scheduler):
     bot.refresh_sess()
-    bot.check_and_solve_captcha()
 
     secs_to_next_hunt = bot.get_user_data()['next_activeturn_seconds']
     if secs_to_next_hunt > 0:
         arbitrary_delay = 5
         total_delay = secs_to_next_hunt + arbitrary_delay
     else:
+        bot.check_and_solve_captcha()
         bot.horn()
-        bot.update_journal_entries()
-
         total_delay = 15*60 + random.randint(1, MAX_DELAY)
+
+    bot.update_journal_entries()
 
     next_hunt_dt = datetime.now() + timedelta(seconds=total_delay)
     print('time of next hunt:', next_hunt_dt.strftime('%Y-%m-%d %T'))
@@ -57,10 +57,10 @@ def horn_loop(bot: Bot, s: sched.scheduler):
 
 def trap_check_loop(bot: Bot, s: sched.scheduler):
     bot.refresh_sess()
-    bot.check_and_solve_captcha()
 
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:
+        bot.check_and_solve_captcha()
         bot.update_journal_entries()
 
     if curr_min >= bot.trap_check:
