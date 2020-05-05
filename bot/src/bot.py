@@ -16,15 +16,13 @@ class Bot(object):
         self.password = password
         self.trap_check = trap_check
         self.captcha_solver_url = captcha_solver_url
-
-        self.journal_entries = None
-        self.last_read_journal_entry_id = None
+        self.keywords = [] if keywords is None else keywords
 
         self.sess = None
         user_data = self.refresh_sess()
         self.unique_hash = user_data['unique_hash']
 
-        self.keywords = [] if keywords is None else keywords
+        self.journal_entries = None
         self.update_journal_entries()
 
     def login(self) -> Session:
@@ -73,7 +71,7 @@ class Bot(object):
 
     def update_journal_entries(self) -> Tuple[List[str], List[str]]:
         curr = self.journal_entries
-        new, last_read_journal_entry_id = self.get_journal_entries()
+        new = self.get_journal_entries()
 
         if curr is None:  # skip diff check at initial startup
             diff = []
@@ -84,17 +82,12 @@ class Bot(object):
             diff = new[:ptr]
 
         self.journal_entries = new
-        self.last_read_journal_entry_id = last_read_journal_entry_id
         return new, diff
 
-    def get_journal_entries(self) -> Tuple[List[str], int]:
+    def get_journal_entries(self) -> List[str]:
         self.check_and_solve_captcha()
         soup = self.get_page_soup()
         journal_entries = soup.find_all('div', class_='entry')
-
-        if len(journal_entries) == 0:
-            return [], None
-        last_read_journal_entry_id = int(journal_entries[0].get('data-entry-id'))
 
         entries = []
         for elem in journal_entries:
@@ -104,7 +97,7 @@ class Bot(object):
             journal_text = BeautifulSoup(str(journal_text_elem).replace('<br/>', '\n'), 'html.parser').text
 
             entries.append('\n'.join((journal_date, journal_text)))
-        return entries, last_read_journal_entry_id
+        return entries
 
     def check_and_solve_captcha(self):
         user_data = self.get_user_data()

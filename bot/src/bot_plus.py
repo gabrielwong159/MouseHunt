@@ -14,6 +14,7 @@ class BotPlus(Bot):
         self.check_location_setup(user_data)
         self.check_queso_river(user_data)
         self.check_bwrift(user_data)
+        self.check_mountain(user_data)
 
         return all_entries, new_entries
 
@@ -48,7 +49,9 @@ class BotPlus(Bot):
         incorrect_frift = (location == 'Furoma Rift' and
                            base != 'Attuned Enerchi Induction Base')
         if any([incorrect_queso, incorrect_frift]):
-            telebot.send_message(f'Not using {base} in {location}')
+            message = f'Not using {base} in {location}'
+            print(message)
+            telebot.send_message(message)
 
     def check_queso_river(self, user_data: dict):
         if self.get_location(user_data) != 'Queso River':
@@ -61,27 +64,41 @@ class BotPlus(Bot):
             data = {
                 'action': 'toggle_wild_tonic',
                 'uh': self.unique_hash,
-                'last_read_journal_entry_id': self.last_read_journal_entry_id,
             }
             self.sess.post(url, data)
+            print('deactivated tonic in queso river')
 
     def check_bwrift(self, user_data: dict):
         if self.get_location(user_data) != 'Bristle Woods Rift':
             return
 
-        url = 'https://www.mousehuntgame.com/managers/ajax/environment/rift_bristle_woods.php'
 
         soup = self.get_environment_hud(user_data)
-        is_bwrift_entrance = soup.find('div', class_='riftBristleWoodsHUD entrance_chamber open')
+        is_bwrift_entrance = soup.find('div', class_='riftBristleWoodsHUD entrance_chamber open') is not None
         if is_bwrift_entrance:
+            url = 'https://www.mousehuntgame.com/managers/ajax/environment/rift_bristle_woods.php'
             data = {
                 'action': 'enter_portal',
                 'portal_type': 'basic_chamber',
                 'uh': self.unique_hash,
-                'last_read_journal_entry_id': self.last_read_journal_entry_id,
             }
             self.sess.post(url, data=data)
+            print('entered bwrift entrance')
+
+    def check_mountain(self, user_data: dict):
+        if self.get_location(user_data) != 'Mountain':
             return
+
+        soup = self.get_environment_hud(user_data)
+        is_boulder_claimable = soup.find('div', class_='mountainHUD-boulderContainer can_claim') is not None
+        if is_boulder_claimable:
+            url = 'https://www.mousehuntgame.com/managers/ajax/environment/mountain.php'
+            data = {
+                'action': 'claim_reward',
+                'uh': self.unique_hash,
+            }
+            self.sess.post(url, data=data)
+            print('claimed boulder reward')
 
     def change_trap(self, classification: str, item_key: str):
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
