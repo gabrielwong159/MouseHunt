@@ -5,6 +5,12 @@ from bot import Bot
 
 
 class BotPlus(Bot):
+    def horn(self):
+        user_data = self.get_user_data()
+        self.check_queso_river(user_data)
+        self.check_vrift(user_data)
+        return super().horn()
+
     def update_journal_entries(self):
         all_entries, new_entries = super().update_journal_entries()
         self.check_entries(new_entries)
@@ -12,7 +18,6 @@ class BotPlus(Bot):
         user_data = self.get_user_data()
         self.check_bait_empty(user_data)
         self.check_location_setup(user_data)
-        self.check_queso_river(user_data)
         self.check_bwrift(user_data)
         self.check_mountain(user_data)
 
@@ -72,7 +77,6 @@ class BotPlus(Bot):
         if self.get_location(user_data) != 'Bristle Woods Rift':
             return
 
-
         soup = self.get_environment_hud(user_data)
         is_bwrift_entrance = soup.find('div', class_='riftBristleWoodsHUD entrance_chamber open') is not None
         if is_bwrift_entrance:
@@ -84,6 +88,42 @@ class BotPlus(Bot):
             }
             self.sess.post(url, data=data)
             print('entered bwrift entrance')
+
+    def check_vrift(self, user_data:dict):
+        if self.get_location(user_data) != 'Valour Rift':
+            return
+
+        floor = int(user_data['enviroment_atts']['floor'])
+        is_fire_active = user_data['enviroment_atts']['is_fuel_enabled']
+        n_fire = user_data['enviroment_atts']['items']['rift_gauntlet_fuel_stat_item']['quantity']
+
+        def toggle_fire():
+            url = 'https://www.mousehuntgame.com/managers/ajax/environment/rift_valour.php'
+            data = {
+                'action': 'toggle_fuel',
+                'uh': self.unique_hash,
+            }
+            self.sess.post(url, data=data)
+
+        if floor % 8 != 0:
+            if is_fire_active:
+                toggle_fire()
+                message = f'At floor {floor}, switching off fire'
+            else:
+                message = None
+        else:
+            if is_fire_active:
+                message = f'At floor {floor}, fire already active'
+            else:
+                if n_fire == 0:
+                    message = f'At floor {floor}, no fire to activate'
+                else:
+                    toggle_fire()
+                    message = f'At floor {floor}, {n_fire} fire available, activating fire'
+
+        if message is not None:
+            print(message)
+            telebot.send_message(message)
 
     def check_mountain(self, user_data: dict):
         if self.get_location(user_data) != 'Mountain':
