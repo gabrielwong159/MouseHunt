@@ -5,12 +5,6 @@ from bot import Bot
 
 
 class BotPlus(Bot):
-    def horn(self):
-        user_data = self.get_user_data()
-        self.check_queso_river(user_data)
-        self.check_vrift(user_data)
-        return super().horn()
-
     def update_journal_entries(self):
         all_entries, new_entries = super().update_journal_entries()
         self.check_entries(new_entries)
@@ -18,7 +12,9 @@ class BotPlus(Bot):
         user_data = self.get_user_data()
         self.check_bait_empty(user_data)
         self.check_location_setup(user_data)
+        self.check_queso_river(user_data)
         self.check_bwrift(user_data)
+        self.check_vrift(user_data)
         self.check_mountain(user_data)
 
         return all_entries, new_entries
