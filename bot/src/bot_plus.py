@@ -16,6 +16,7 @@ class BotPlus(Bot):
         self.check_bwrift(user_data)
         self.check_vrift(user_data)
         self.check_mountain(user_data)
+        self.check_warpath(user_data)
 
         return all_entries, new_entries
 
@@ -135,6 +136,52 @@ class BotPlus(Bot):
             }
             self.sess.post(url, data=data)
             print('claimed boulder reward')
+
+    def check_warpath(self, user_data: dict):
+        if self.get_location(user_data) != 'Fiery Warpath':
+            return
+
+        soup = self.get_environment_hud(user_data)
+
+        main_hud_div = soup.find('div', class_='warpathHUD')
+        for wave in ['wave_1', 'wave_2', 'wave_3']:
+            if wave in main_hud_div['class']:
+                break
+        else:
+            return
+
+        streak = int(soup.find('div', class_='warpathHUD-streak-quantity').text)
+        if streak >= 6:
+            self.change_trap('trinket', 'super_flame_march_general_trinket')
+            telebot.send_message(f'Streak {streak}, arming Warpath Commander\'s charm')
+        else:
+            if 'Commander' in user_data['trinket_name']:
+                self.change_trap('trinket', 'flame_march_scout_trinket')
+                telebot.send_message(f'Streak {streak}, disarming Warpath Commander\'s charm')
+
+            if wave == 'wave_1':
+                suffix = '_weak'
+            elif wave == 'wave_2':
+                suffix = ''
+            elif wave == 'wave_3':
+                suffix = '_epic'
+            popn_class = 'warpathHUD-wave-mouse-population'
+            desert_types = ['warrior', 'scout', 'archer']
+            n_desert = {t: int(soup
+                               .find('div', class_=f'warpathHUD-wave {wave}')
+                               .find('div', class_=f'desert_{t}{suffix}')
+                               .find('div', class_=popn_class)
+                               .text)
+                        for t in desert_types}
+
+            remaining_types = [_ for _ in n_desert.items() if _[1] > 0]
+            if len(remaining_types) == 0:
+                return
+
+            target_type = min(remaining_types, key=lambda _: _[1])[0]
+            if target_type not in user_data['trinket_name'].lower():
+                self.change_trap('trinket', f'flame_march_{target_type}_trinket')
+                telebot.send_message(f'changing trinket: {target_type}')
 
     def change_trap(self, classification: str, item_key: str):
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
