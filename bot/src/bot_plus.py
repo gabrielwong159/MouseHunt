@@ -1,6 +1,7 @@
 import json
 import telebot
 from bs4 import BeautifulSoup
+from requests import Response
 from bot import Bot
 
 
@@ -22,7 +23,7 @@ class BotPlus(Bot):
 
     def check_entries(self, new_entries):
         for entry in new_entries[::-1]:
-            print(entry, end='\n\n')
+            self.logger.info(f'\n{entry}\n')
             for keyword in self.keywords:
                 if keyword in entry:
                     telebot.send_message(entry)
@@ -52,7 +53,6 @@ class BotPlus(Bot):
                            base != 'Attuned Enerchi Induction Base')
         if any([incorrect_queso, incorrect_frift]):
             message = f'Not using {base} in {location}'
-            print(message)
             telebot.send_message(message)
 
     def check_queso_river(self, user_data: dict):
@@ -68,7 +68,6 @@ class BotPlus(Bot):
                 'uh': self.unique_hash,
             }
             self.sess.post(url, data)
-            print('deactivated tonic in queso river')
 
     def check_bwrift(self, user_data: dict):
         if self.get_location(user_data) != 'Bristle Woods Rift':
@@ -84,7 +83,6 @@ class BotPlus(Bot):
                 'uh': self.unique_hash,
             }
             self.sess.post(url, data=data)
-            print('entered bwrift entrance')
 
     def check_vrift(self, user_data:dict):
         if self.get_location(user_data) != 'Valour Rift':
@@ -135,7 +133,6 @@ class BotPlus(Bot):
                 'uh': self.unique_hash,
             }
             self.sess.post(url, data=data)
-            print('claimed boulder reward')
 
     def check_warpath(self, user_data: dict):
         if self.get_location(user_data) != 'Fiery Warpath':
@@ -206,3 +203,8 @@ class BotPlus(Bot):
     def get_environment_hud(self, user_data: dict) -> BeautifulSoup:
         hud = user_data['enviroment_atts']['environment_hud']
         return BeautifulSoup(hud, 'html.parser')
+
+    def raise_res_error(self, res: Response):
+        self.logger.error(res.text)
+        telebot.send_message(f'ERROR: {res.text}')
+        super().raise_res_error(res)

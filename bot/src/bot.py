@@ -1,10 +1,15 @@
 import json
+import logging
 import re
 import requests
 from requests import Session, Response
 from bs4 import BeautifulSoup
 from typing import List, Tuple
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %T')
+logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 
 class Bot(object):
@@ -12,6 +17,7 @@ class Bot(object):
 
     def __init__(self, username: str, password: str, trap_check: int,
                  captcha_solver_url: str, keywords: List[str] = None):
+        self.logger = logging.getLogger(__name__)
         self.username = username
         self.password = password
         self.trap_check = trap_check
@@ -37,6 +43,7 @@ class Bot(object):
         res = sess.post(login_url, form_data)
         if not res.ok:
             self.raise_res_error(res)
+        self.logger.info('Login success')
         return sess
 
     def refresh_sess(self) -> dict:
@@ -61,6 +68,7 @@ class Bot(object):
         res = self.sess.get(horn_url)
         if not res.ok:
             self.raise_res_error(res)
+        self.logger.info('Horn')
 
     def get_page_soup(self) -> BeautifulSoup:
         home_url = Bot.base_url
@@ -111,7 +119,7 @@ class Bot(object):
     def solve_captcha(self):
         captcha_url = self.get_captcha_url()
         answer = requests.get(self.captcha_solver_url, params={'url': captcha_url}).text
-        print('captcha', answer)
+        self.logger.info(f'captcha solved: {answer}')
 
         url = f'{Bot.base_url}/managers/ajax/users/solvePuzzle.php'
         if len(answer) != 5:

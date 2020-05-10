@@ -49,7 +49,7 @@ def horn_loop(bot: Bot, s: sched.scheduler):
     bot.update_journal_entries()
 
     next_hunt_dt = datetime.now() + timedelta(seconds=total_delay)
-    print('time of next hunt:', next_hunt_dt.strftime('%Y-%m-%d %T'))
+    bot.logger.info(f'time of next hunt: {next_hunt_dt.strftime("%Y-%m-%d %T")}')
 
     s.enter(delay=total_delay, priority=HORN_PRIORITY, action=horn_loop, argument=(bot, s))
     s.run()
@@ -60,7 +60,6 @@ def trap_check_loop(bot: Bot, s: sched.scheduler):
 
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:
-        bot.check_and_solve_captcha()
         bot.update_journal_entries()
 
     if curr_min >= bot.trap_check:
@@ -70,7 +69,7 @@ def trap_check_loop(bot: Bot, s: sched.scheduler):
 
     arbitrary_buffer = 5
     next_check_dt = next_check_hour.replace(minute=bot.trap_check, second=arbitrary_buffer, microsecond=0)
-    print('time of next trap check:', next_check_dt.strftime('%Y-%m-%d %T'))
+    bot.logger.info(f'time of next trap check: {next_check_dt.strftime("%Y-%m-%d %T")}')
 
     secs_to_next_check = (next_check_dt - datetime.now()).total_seconds()
     s.enter(delay=secs_to_next_check, priority=TRAP_CHECK_PRIORITY, action=trap_check_loop, argument=(bot, s))
