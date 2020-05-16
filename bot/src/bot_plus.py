@@ -1,4 +1,5 @@
 import json
+import os
 import telebot
 from bs4 import BeautifulSoup
 from requests import Response
@@ -6,6 +7,12 @@ from bot import Bot
 
 
 class BotPlus(Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.warpath_gargantua = bool(os.environ.get('MH_WARPATH_GARGANTUA', False))
+        self.warpath_wave_charm = True
+
     def update_journal_entries(self):
         all_entries, new_entries = super().update_journal_entries()
         self.check_entries(new_entries)
@@ -148,14 +155,12 @@ class BotPlus(Bot):
             return
 
         streak = int(soup.find('div', class_='warpathHUD-streak-quantity').text)
-        if streak >= 6:
-            self.change_trap('trinket', 'super_flame_march_general_trinket')
-            telebot.send_message(f'Streak {streak}, arming Warpath Commander\'s charm')
-        else:
-            if 'Commander' in user_data['trinket_name']:
-                self.change_trap('trinket', 'flame_march_scout_trinket')
-                telebot.send_message(f'Streak {streak}, disarming Warpath Commander\'s charm')
-
+        if streak >= 7 and self.warpath_gargantua:
+            telebot.send_message(f'Streak {streak}, Gargantua mode')
+        elif streak >= 6 and not self.warpath_gargantua:
+                self.change_trap('trinket', 'super_flame_march_general_trinket')
+                telebot.send_message(f'Streak {streak}, arming Warpath Commander\'s charm')
+        elif streak == 0 and self.warpath_wave_charm:
             if wave == 'wave_1':
                 suffix = '_weak'
             elif wave == 'wave_2':
