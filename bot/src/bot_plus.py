@@ -141,6 +141,29 @@ class BotPlus(Bot):
             }
             self.sess.post(url, data=data)
 
+    def check_town_of_gnawnia(self, user_data: dict):
+        if self.get_location(user_data) != 'Town of Gnawnia':
+            return
+
+        soup = self.get_environment_hud(user_data)
+        url = 'https://www.mousehuntgame.com/managers/ajax/users/town_of_gnawnia.php'
+
+        is_reward_claimable = soup.find('a', class_='townOfGnawniaHUD-actionButton claim active') is not None
+        if is_reward_claimable:
+            data = {
+                'action': 'claim_reward',
+                'uh': self.unique_hash,
+            }
+            self.sess.post(url, data=data)
+
+        is_bounty_acceptable = soup.find('a', 'townOfGnawniaHUD-actionButton reveal active') is not None
+        if is_bounty_acceptable:
+            data = {
+                'action': 'accept_bounty',
+                'uh': self.unique_hash,
+            }
+            self.sess.post(url, data=data)
+
     def check_warpath(self, user_data: dict):
         if self.get_location(user_data) != 'Fiery Warpath':
             return
