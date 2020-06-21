@@ -41,11 +41,16 @@ class BotPlus(Bot):
             return
 
         is_rift = user_data['environment_name'].endswith('Rift')
+        is_queso = user_data['environment_name'] in ['Prickly Plains', 'Cantera Quarry']
         if is_rift:
-            self.change_trap('bait', 'brie_string_cheese')
+            cheese = 'brie_string_cheese'
+        elif is_queso:
+            cheese = 'bland_queso_cheese'
         else:
-            self.change_trap('bait', 'gouda_cheese')
-        telebot.send_message('bait empty')
+            cheese = 'gouda_cheese'
+
+        self.change_trap('bait', cheese)
+        telebot.send_message(f'bait empty, now using {cheese}')
 
     def check_location_setup(self, user_data: dict):
         # iceberg, muridae, living garden
@@ -59,7 +64,7 @@ class BotPlus(Bot):
         incorrect_frift = (location == 'Furoma Rift' and
                            base != 'Attuned Enerchi Induction Base')
         if any([incorrect_queso, incorrect_frift]):
-            message = f'Not using {base} in {location}'
+            message = f'Unexpected setup in {location}'
             telebot.send_message(message)
 
     def check_queso_river(self, user_data: dict):
