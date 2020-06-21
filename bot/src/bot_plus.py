@@ -8,10 +8,10 @@ from bot import Bot
 
 class BotPlus(Bot):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
         self.warpath_gargantua = bool(os.environ.get('MH_WARPATH_GARGANTUA', False))
         self.warpath_wave_charm = True
+
+        super().__init__(*args, **kwargs)
 
     def update_journal_entries(self):
         all_entries, new_entries = super().update_journal_entries()
@@ -209,7 +209,7 @@ class BotPlus(Bot):
                 return
 
             target_type = min(remaining_types, key=lambda _: _[1])[0]
-            if target_type not in user_data['trinket_name'].lower():
+            if user_data['trinket_name'] is None or target_type not in user_data['trinket_name'].lower():
                 self.change_trap('trinket', f'flame_march_{target_type}_trinket')
                 telebot.send_message(f'changing trinket: {target_type}')
 
