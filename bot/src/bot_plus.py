@@ -216,15 +216,16 @@ class BotPlus(Bot):
     def change_trap(self, classification: str, item_key: str):
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
 
-        url = f'{Bot.base_url}/managers/ajax/users/gettrapcomponents.php'
-        data = {'unique_hash': self.unique_hash, 'classification': classification}
-        res = self.sess.post(url, data=data)
+        if item_key not in 'disarm':
+            url = f'{Bot.base_url}/managers/ajax/users/gettrapcomponents.php'
+            data = {'unique_hash': self.unique_hash, 'classification': classification}
+            res = self.sess.post(url, data=data)
 
-        components = json.loads(res.text)['components']
-        available_components = [component['type'] for component in components]
-        if item_key not in available_components:
-            telebot.send_message(f'cannot find {classification}: {item_key}')
-            return
+            components = json.loads(res.text)['components']
+            available_components = [component['type'] for component in components]
+            if item_key not in available_components:
+                telebot.send_message(f'cannot find {classification}: {item_key}')
+                return
 
         url = f'{Bot.base_url}/managers/ajax/users/changetrap.php'
         data = {'uh': self.unique_hash, classification: item_key}
