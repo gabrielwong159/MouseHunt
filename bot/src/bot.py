@@ -133,10 +133,7 @@ class Bot(object):
     def get_captcha_url(self) -> str:
         soup = self.get_page_soup()
         elem = soup.find('div', class_='mousehuntPage-puzzle-form-captcha-image')
-
-        pattern = r"background-image:url\('(.*?)'\);"
-        match = re.match(pattern, elem['style'])
-        return match.group(1)
+        return elem.img['src']
 
     def raise_res_error(self, res: Response):
         raise Exception(res.text)
