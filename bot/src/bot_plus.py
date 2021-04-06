@@ -11,6 +11,11 @@ class BotPlus(Bot):
         self.warpath_gargantua = os.environ.get('MH_WARPATH_GARGANTUA', 'true').lower() == 'true'
         self.warpath_wave_charm = True
 
+        self.vrift_fire = os.environ.get('MH_VRIFT_FIRE', 'true').lower() == 'true'
+
+        print('Warpath mode:', 'Gargantua' if self.warpath_gargantua else 'Commander')
+        print('Vrift auto toggle fire:', self.vrift_fire)
+
         super().__init__(*args, **kwargs)
 
     def update_journal_entries(self):
@@ -97,6 +102,9 @@ class BotPlus(Bot):
             self.sess.post(url, data=data)
 
     def check_vrift(self, user_data:dict):
+        if not self.vrift_fire:
+            return
+
         if self.get_location(user_data) != 'Valour Rift':
             return
 
@@ -112,21 +120,19 @@ class BotPlus(Bot):
             }
             self.sess.post(url, data=data)
 
+        message = None
         if floor % 8 != 0:
             if is_fire_active:
                 toggle_fire()
                 message = f'At floor {floor}, switching off fire'
-            else:
-                message = None
         else:
             if is_fire_active:
                 message = f'At floor {floor}, fire already active'
+            elif n_fire == 0:
+                message = f'At floor {floor}, no fire to activate'
             else:
-                if n_fire == 0:
-                    message = f'At floor {floor}, no fire to activate'
-                else:
-                    toggle_fire()
-                    message = f'At floor {floor}, {n_fire} fire available, activating fire'
+                toggle_fire()
+                message = f'At floor {floor}, {n_fire} fire available, activating fire'
 
         if message is not None:
             print(message)
