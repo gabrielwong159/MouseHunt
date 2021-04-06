@@ -8,7 +8,7 @@ from bot import Bot
 
 class BotPlus(Bot):
     def __init__(self, *args, **kwargs):
-        self.warpath_gargantua = bool(os.environ.get('MH_WARPATH_GARGANTUA', False))
+        self.warpath_gargantua = os.environ.get('MH_WARPATH_GARGANTUA', 'true').lower() == 'true'
         self.warpath_wave_charm = True
 
         super().__init__(*args, **kwargs)
