@@ -40,6 +40,7 @@ class BotPlus(Bot):
             for keyword in self.keywords:
                 if keyword in entry:
                     telebot.send_message(entry)
+                    break
 
     def check_bait_empty(self, user_data: dict):
         bait_qty = user_data['bait_quantity']
