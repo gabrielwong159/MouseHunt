@@ -30,6 +30,7 @@ class BotPlus(Bot):
         self.check_vrift(user_data)
         self.check_mountain(user_data)
         self.check_warpath(user_data)
+        self.check_cursed_city(user_data)
 
         return all_entries, new_entries
 
@@ -219,16 +220,41 @@ class BotPlus(Bot):
                 self.change_trap('trinket', f'flame_march_{target_type}_trinket')
                 telebot.send_message(f'changing trinket: {target_type}')
 
+    def check_cursed_city(self, user_data: dict):
+        if self.get_location(user_data) != 'Cursed City':
+            return
+        if 'QuestLostCity' not in user_data['quests']:
+            return  # TODO - raise appropriate alert
+
+        minigame = user_data['quests']['QuestLostCity']['minigame']
+        if not minigame['is_cursed']:
+            is_equipping_minigame_charm = any(curse['charm']['equipped'] for curse in minigame['curses'])
+            if is_equipping_minigame_charm:
+                self.change_trap('trinket', 'disarm')
+            return
+
+        for curse in minigame['curses']:
+            if not curse['active']:  # curse already cleared
+                continue
+            if curse['charm']['equipped']:  # active and correctly armed
+                break
+
+            if curse['charm']['name'] == 'Bravery Charm':
+                trinket_key = 'bravery_trinket'
+            elif curse['charm']['name'] == 'Shine Charm':
+                trinket_key = 'shine_trinket'
+            else:
+                trinket_key = 'clarity_trinket'
+            if trinket_key not in self.get_trap_components('trinket'):
+                self.purchase_item(trinket_key, 1)
+            self.change_trap('trinket', trinket_key)
+            break
+
     def change_trap(self, classification: str, item_key: str):
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
 
         if item_key not in 'disarm':
-            url = f'{Bot.base_url}/managers/ajax/users/gettrapcomponents.php'
-            data = {'unique_hash': self.unique_hash, 'classification': classification}
-            res = self.sess.post(url, data=data)
-
-            components = json.loads(res.text)['components']
-            available_components = [component['type'] for component in components]
+            available_components = self.get_trap_components(classification)
             if item_key not in available_components:
                 telebot.send_message(f'cannot find {classification}: {item_key}')
                 return
@@ -236,6 +262,27 @@ class BotPlus(Bot):
         url = f'{Bot.base_url}/managers/ajax/users/changetrap.php'
         data = {'uh': self.unique_hash, classification: item_key}
         self.sess.post(url, data=data)
+
+    def purchase_item(self, item_key: str, quantity: int):
+        url = f'{self.base_url}/managers/ajax/purchases/itempurchase.php'
+        data = {
+            'uh': self.unique_hash,
+            'type': item_key,
+            'quantity': quantity,
+            'buy': 1,
+            'is_kings_cart_item': 0,
+        }
+        self.sess.post(url, data=data)
+
+    def get_trap_components(self, classification: str) -> set:
+        assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
+
+        url = f'{Bot.base_url}/managers/ajax/users/gettrapcomponents.php'
+        data = {'uh': self.unique_hash, 'classification': classification}
+        res = self.sess.post(url, data=data)
+
+        components = json.loads(res.text)['components']
+        return {component['type'] for component in components}
 
     def get_location(self, user_data: dict) -> str:
         return user_data['environment_name']
