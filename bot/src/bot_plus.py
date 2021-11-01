@@ -48,7 +48,7 @@ class BotPlus(Bot):
             return
 
         is_rift = user_data['environment_name'].endswith('Rift')
-        is_queso = user_data['environment_name'] in ['Prickly Plains', 'Cantera Quarry']
+        is_queso = user_data['environment_name'] in ['Prickly Plains', 'Cantera Quarry', 'Queso Geyser']
         if is_rift:
             cheese = 'brie_string_cheese'
         elif is_queso:
