@@ -26,6 +26,7 @@ class Bot(object):
 
         self.sess = None
         user_data = self.refresh_sess()
+        self.name = user_data["username"]
         self.unique_hash = user_data['unique_hash']
 
         self.journal_entries = None

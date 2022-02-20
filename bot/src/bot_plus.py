@@ -39,7 +39,7 @@ class BotPlus(Bot):
             self.logger.info(f'\n{entry}\n')
             for keyword in self.keywords:
                 if keyword in entry:
-                    telebot.send_message(entry)
+                    telebot.send_message(f"{self.name}\n{entry}")
                     break
 
     def check_bait_empty(self, user_data: dict):
@@ -57,7 +57,7 @@ class BotPlus(Bot):
             cheese = 'gouda_cheese'
 
         self.change_trap('bait', cheese)
-        telebot.send_message(f'bait empty, now using {cheese}')
+        telebot.send_message(f'{self.name}\nbait empty, now using {cheese}')
 
     def check_location_setup(self, user_data: dict):
         # iceberg, muridae, living garden
@@ -72,7 +72,7 @@ class BotPlus(Bot):
                            base != 'Attuned Enerchi Induction Base')
         if any([incorrect_queso, incorrect_frift]):
             message = f'Unexpected setup in {location}'
-            telebot.send_message(message)
+            telebot.send_message(f"{self.name}\n{message}")
 
     def check_queso_river(self, user_data: dict):
         if self.get_location(user_data) != 'Queso River':
@@ -138,7 +138,7 @@ class BotPlus(Bot):
 
         if message is not None:
             print(message)
-            telebot.send_message(message)
+            telebot.send_message(f"{self.name}\n{message}")
 
     def check_mountain(self, user_data: dict):
         if self.get_location(user_data) != 'Mountain':
@@ -192,10 +192,10 @@ class BotPlus(Bot):
 
         streak = int(soup.find('div', class_='warpathHUD-streak-quantity').text)
         if streak >= 7 and self.warpath_gargantua:
-            telebot.send_message(f'Streak {streak}, Gargantua mode')
+            telebot.send_message(f'{self.name}\nStreak {streak}, Gargantua mode')
         elif streak >= 6 and not self.warpath_gargantua:
                 self.change_trap('trinket', 'super_flame_march_general_trinket')
-                telebot.send_message(f'Streak {streak}, arming Warpath Commander\'s charm')
+                telebot.send_message(f'{self.name}\nStreak {streak}, arming Warpath Commander\'s charm')
         elif streak == 0 and self.warpath_wave_charm:
             if wave == 'wave_1':
                 suffix = '_weak'
@@ -219,7 +219,7 @@ class BotPlus(Bot):
             target_type = min(remaining_types, key=lambda _: _[1])[0]
             if user_data['trinket_name'] is None or target_type not in user_data['trinket_name'].lower():
                 self.change_trap('trinket', f'flame_march_{target_type}_trinket')
-                telebot.send_message(f'changing trinket: {target_type}')
+                telebot.send_message(f'{self.name}\nchanging trinket: {target_type}')
 
     def check_cursed_city(self, user_data: dict):
         if self.get_location(user_data) != 'Cursed City':
@@ -257,7 +257,7 @@ class BotPlus(Bot):
         if item_key not in 'disarm':
             available_components = self.get_trap_components(classification)
             if item_key not in available_components:
-                telebot.send_message(f'cannot find {classification}: {item_key}')
+                telebot.send_message(f'{self.name}\ncannot find {classification}: {item_key}')
                 return
 
         url = f'{Bot.base_url}/managers/ajax/users/changetrap.php'
@@ -294,5 +294,5 @@ class BotPlus(Bot):
 
     def raise_res_error(self, res: Response):
         self.logger.error(res.text)
-        telebot.send_message(f'ERROR: {res.text}')
+        telebot.send_message(f'{self.name}\nERROR: {res.text}')
         super().raise_res_error(res)
