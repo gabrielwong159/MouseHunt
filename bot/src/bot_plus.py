@@ -31,6 +31,7 @@ class BotPlus(Bot):
         self.check_mountain(user_data)
         self.check_warpath(user_data)
         self.check_cursed_city(user_data)
+        self.check_lost_city(user_data)
 
         return all_entries, new_entries
 
@@ -250,6 +251,23 @@ class BotPlus(Bot):
                 self.purchase_item(trinket_key, 1)
             self.change_trap('trinket', trinket_key)
             break
+
+    def check_lost_city(self, user_data: dict):
+        if self.get_location(user_data) != 'Lost City':
+            return
+        if 'QuestLostCity' not in user_data['quests']:
+            return
+
+        minigame = user_data['quests']['QuestLostCity']['minigame']
+        if not minigame['is_cursed']:
+            return
+        if minigame['curses'][0]['charm']['equipped']:
+            return
+
+        trinket_key = 'searcher_trinket'
+        if trinket_key not in self.get_trap_components('trinket'):
+            self.purchase_item(trinket_key, 1)
+        self.change_trap('trinket', trinket_key)
 
     def change_trap(self, classification: str, item_key: str):
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
