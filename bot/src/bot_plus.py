@@ -103,6 +103,13 @@ class BotPlus(Bot):
                 'uh': self.unique_hash,
             }
             self.sess.post(url, data=data)
+            return
+
+        quest_data = user_data['quests']['QuestRiftBristleWoods']
+        if quest_data['chamber_status'] != 'open':
+            return
+        portal_names = ', '.join(portal['name'] for portal in quest_data['portals'])
+        telebot.send_message(f'{self.name}\nPortals: {portal_names}')
 
     def check_vrift(self, user_data:dict):
         if not self.vrift_fire:
