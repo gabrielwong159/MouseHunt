@@ -32,6 +32,7 @@ class BotPlus(Bot):
         self.check_warpath(user_data)
         self.check_cursed_city(user_data)
         self.check_lost_city(user_data)
+        self.check_sb_factory(user_data)
 
         return all_entries, new_entries
 
@@ -275,6 +276,19 @@ class BotPlus(Bot):
         if trinket_key not in self.get_trap_components('trinket'):
             self.purchase_item(trinket_key, 1)
         self.change_trap('trinket', trinket_key)
+
+    def check_sb_factory(self, user_data: dict):
+        if self.get_location(user_data) != 'SUPER|brie+ Factory':
+            return
+
+        is_crate_claimable = user_data['quests']['QuestSuperBrieFactory']['factory_atts']['can_claim']
+        if is_crate_claimable:
+            url = 'https://www.mousehuntgame.com/managers/ajax/events/birthday_factory.php'
+            data = {
+                'uh': self.unique_hash,
+                'action': 'claim_reward',
+            }
+            self.sess.post(url, data=data)
 
     def change_trap(self, classification: str, item_key: str):
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
