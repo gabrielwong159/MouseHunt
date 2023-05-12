@@ -203,32 +203,34 @@ class BotPlus(Bot):
         else:
             return
 
+        if wave == 'wave_1':
+            suffix = '_weak'
+        elif wave == 'wave_2':
+            suffix = ''
+        elif wave == 'wave_3':
+            suffix = '_epic'
+        popn_class = 'warpathHUD-wave-mouse-population'
+        desert_types = ['warrior', 'scout', 'archer']
+        n_desert = {t: int(soup
+                           .find('div', class_=f'warpathHUD-wave {wave}')
+                           .find('div', class_=f'desert_{t}{suffix}')
+                           .find('div', class_=popn_class)
+                           .text)
+                    for t in desert_types}
+        remaining_types = [_ for _ in n_desert.items() if _[1] > 0]
+
         streak = int(soup.find('div', class_='warpathHUD-streak-quantity').text)
         if streak >= 7 and self.warpath_gargantua:
             telebot.send_message(f'{self.name}\nStreak {streak}, Gargantua mode')
-        elif streak >= 6 and not self.warpath_gargantua:
-                self.change_trap('trinket', 'super_flame_march_general_trinket')
-                telebot.send_message(f'{self.name}\nStreak {streak}, arming Warpath Commander\'s charm')
+        elif streak >= 6 and not self.warpath_gargantua and len(remaining_types) > 1:
+            self.change_trap('trinket', 'flame_march_general_trinket')
+            telebot.send_message(f'{self.name}\nStreak {streak}, arming Warpath Commander\'s charm')
         elif streak == 0 and self.warpath_wave_charm:
-            if wave == 'wave_1':
-                suffix = '_weak'
-            elif wave == 'wave_2':
-                suffix = ''
-            elif wave == 'wave_3':
-                suffix = '_epic'
-            popn_class = 'warpathHUD-wave-mouse-population'
-            desert_types = ['warrior', 'scout', 'archer']
-            n_desert = {t: int(soup
-                               .find('div', class_=f'warpathHUD-wave {wave}')
-                               .find('div', class_=f'desert_{t}{suffix}')
-                               .find('div', class_=popn_class)
-                               .text)
-                        for t in desert_types}
-
-            remaining_types = [_ for _ in n_desert.items() if _[1] > 0]
             if len(remaining_types) == 0:
                 return
-
+            if len(remaining_types) == 1:
+                self.change_trap('trinket', 'disarm')
+                return
             target_type = min(remaining_types, key=lambda _: _[1])[0]
             if user_data['trinket_name'] is None or target_type not in user_data['trinket_name'].lower():
                 self.change_trap('trinket', f'flame_march_{target_type}_trinket')
