@@ -1,7 +1,7 @@
 import json
 import logging
-import re
 import requests
+from datetime import datetime
 from requests import Session, Response
 from bs4 import BeautifulSoup
 from typing import List, Tuple
@@ -28,6 +28,7 @@ class Bot(object):
         user_data = self.refresh_sess()
         self.name = user_data["username"]
         self.unique_hash = user_data['unique_hash']
+        self.user_id = user_data["user_id"]
 
         self.journal_entries = None
         self.update_journal_entries()
@@ -122,19 +123,23 @@ class Bot(object):
         answer = requests.get(self.captcha_solver_url, params={'url': captcha_url}).text
         self.logger.info(f'captcha solved: {answer}')
 
-        url = f'{Bot.base_url}/managers/ajax/users/solvePuzzle.php'
+        url = f"{Bot.base_url}/managers/ajax/users/puzzle.php"
         if len(answer) != 5:
-            data = {'newpuzzle': True, 'uh': self.unique_hash}
+            data = {"action": "request_new_code", "uh": self.unique_hash}
             self.sess.post(url, data)
             return self.solve_captcha()
 
-        data = {'puzzle_answer': answer, 'uh': self.unique_hash}
+        data = {
+            "action": "solve",
+            "code": answer,
+            "uh": self.unique_hash,
+        }
         self.sess.post(url, data)
 
     def get_captcha_url(self) -> str:
-        soup = self.get_page_soup()
-        elem = soup.find('div', class_='mousehuntPage-puzzle-form-captcha-image')
-        return elem.img['src']
+        epoch = datetime.utcfromtimestamp(0)
+        milliseconds_since_epoch = int((datetime.now() - epoch).total_seconds() * 1000)
+        return f"{self.base_url}/images/puzzleimage.php?t={milliseconds_since_epoch}&user_id={self.user_id}"
 
     def raise_res_error(self, res: Response):
         raise Exception(res.text)
