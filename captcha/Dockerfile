@@ -1,8 +1,8 @@
 # docker build -t mh-captcha-solver.
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends tesseract-ocr libtesseract-dev \
+    && apt-get install -y --no-install-recommends libgl1 tesseract-ocr libtesseract-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY ./app /app
