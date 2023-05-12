@@ -113,9 +113,6 @@ class BotPlus(Bot):
         telebot.send_message(f'{self.name}\nPortals: {portal_names}')
 
     def check_vrift(self, user_data:dict):
-        if not self.vrift_fire:
-            return
-
         if self.get_location(user_data) != 'Valour Rift':
             return
 
@@ -130,6 +127,13 @@ class BotPlus(Bot):
                 'uh': self.unique_hash,
             }
             self.sess.post(url, data=data)
+
+        if floor % 8 == 0:
+            message = f"At floor {floor}"
+            telebot.send_message(f"{self.name}\n{message}")
+
+        if not self.vrift_fire:
+            return
 
         message = None
         if floor % 8 != 0:
