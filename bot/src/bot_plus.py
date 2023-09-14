@@ -13,6 +13,9 @@ class BotPlus(Bot):
 
         self.vrift_fire = os.environ.get('MH_VRIFT_FIRE', 'true').lower() == 'true'
 
+        self.king_grub = os.environ.get("MH_KING_GRUB", "true").lower() == "true"
+        self.king_grub_threshold = int(os.environ.get("MH_KING_GRUB_THRESHOLD", 0))
+
         print('Warpath mode:', 'Gargantua' if self.warpath_gargantua else 'Commander')
         print('Vrift auto toggle fire:', self.vrift_fire)
 
@@ -32,6 +35,7 @@ class BotPlus(Bot):
         self.check_warpath(user_data)
         self.check_cursed_city(user_data)
         self.check_lost_city(user_data)
+        self.check_sand_dunes(user_data)
         self.check_sb_factory(user_data)
 
         return all_entries, new_entries
@@ -283,6 +287,48 @@ class BotPlus(Bot):
             self.purchase_item(trinket_key, 1)
         self.change_trap('trinket', trinket_key)
 
+    def check_sand_dunes(self, user_data: dict):
+        if self.get_location(user_data) != "Sand Crypts":
+            return
+        if not self.king_grub:
+            return
+
+        sand = user_data["quests"]["QuestSandDunes"]["minigame"]["salt_charms_used"]
+        print(f"Sand level: {sand}")
+        if sand < self.king_grub_threshold:
+            # try to equip super salt charm
+            print("Attempt to equip super salt charm")
+            if user_data["trinket_name"] == "Super Salt Charm" and user_data["trinket_quantity"] > 0:
+                print(f"Super salt charm already equipped")
+                return
+            self.change_trap("trinket", "disarm")
+            trinket_key = "super_salt_trinket"
+            if trinket_key not in self.get_trap_components("trinket"):
+                print("Need to craft super salt charm")
+                self.craft_item(
+                    crafting_items={
+                        "parts[extra_coarse_salt_crafting_item]": 1,
+                        "parts[essence_b_crafting_item]": 2,
+                        "parts[perfect_orb]": 1,
+                    },
+                    quantity=1,
+                )
+                print("Super salt charm crafted")
+            self.change_trap("trinket", trinket_key)
+            print("Equipped super salt charm")
+        else:
+            # equip grub scent charm
+            print("Attemp to equip grub scent charm")
+            if user_data["trinket_name"] == "Grub Scent Charm":
+                print("Grub scent charm already equipped")
+                return
+            trinket_key = "grub_scent_trinket"
+            if trinket_key not in self.get_trap_components("trinket"):
+                print("Need to purchase grub scent charm")
+                self.purchase_item(trinket_key, 1)
+            self.change_trap("trinket", trinket_key)
+            print("Equipped grub scent charm")
+
     def check_sb_factory(self, user_data: dict):
         if self.get_location(user_data) != 'SUPER|brie+ Factory':
             return
@@ -317,6 +363,15 @@ class BotPlus(Bot):
             'quantity': quantity,
             'buy': 1,
             'is_kings_cart_item': 0,
+        }
+        self.sess.post(url, data=data)
+
+    def craft_item(self, crafting_items: dict, quantity: int):
+        url = f"{self.base_url}/managers/ajax/users/crafting.php"
+        data = {
+            "uh": self.unique_hash,
+            **crafting_items,
+            "craftQty": quantity,
         }
         self.sess.post(url, data=data)
 
