@@ -38,6 +38,7 @@ class BotPlus(Bot):
         self.check_sand_dunes(user_data)
         self.check_sb_factory(user_data)
         self.check_halloween(user_data)
+        self.check_winter_hunt(user_data)
 
         return all_entries, new_entries
 
@@ -370,6 +371,28 @@ class BotPlus(Bot):
                 "recipe_type": chosen_recipe,
             }
             self.sess.post(url, data=data)
+
+    def check_winter_hunt(self, user_data: dict):
+        location = self.get_location(user_data)
+        if location not in {"Cinnamon Hill", "Golem Workshop", "Ice Fortress"}:
+            return
+
+        if location == "Cinnamon Hill":
+            quest_key = "QuestCinnamonTreeGrove"
+        elif location == "Golem Workshop":
+            quest_key = "QuestGolemWorkshop"
+        else:
+            quest_key = "QuestIceFortress"
+        quest_data = user_data["quests"][quest_key]
+
+        claimable_slots = []
+        for idx, golem in enumerate(quest_data["golems"]):
+            if golem["can_claim"]:
+                claimable_slots.append(golem["slot"])
+
+        if len(claimable_slots) == 0:
+            return
+        telebot.send_message(f"Claimable golems: {claimable_slots}")
 
     def change_trap(self, classification: str, item_key: str):
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
