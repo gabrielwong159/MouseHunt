@@ -37,6 +37,7 @@ class BotPlus(Bot):
         self.check_lost_city(user_data)
         self.check_sand_dunes(user_data)
         self.check_sb_factory(user_data)
+        self.check_halloween(user_data)
 
         return all_entries, new_entries
 
@@ -339,6 +340,34 @@ class BotPlus(Bot):
             data = {
                 'uh': self.unique_hash,
                 'action': 'claim_reward',
+            }
+            self.sess.post(url, data=data)
+
+    def check_halloween(self, user_data: dict):
+        if self.get_location(user_data) != "Gloomy Greenwood":
+            return
+
+        quest_data = user_data["quests"]["QuestHalloweenBoilingCauldron"]
+        for idx, cauldron in enumerate(quest_data["cauldrons"]):
+            if cauldron["is_brewing"]:
+                continue
+
+            # run this in the loop to check quantity again after each brew attempt
+            cheeses = quest_data["recipes"]["cheese"][::-1]  # reverse order to brew most valuable first
+            chosen_recipe = None
+            for cheese in cheeses:
+                if cheese["cost"][0]["num_owned"] >= cheese["cost"][0]["quantity"]:
+                    chosen_recipe = cheese["type"]
+                    break
+            if chosen_recipe is None:
+                return  # insufficient ingredients to brew - abort altogether
+
+            url = "https://www.mousehuntgame.com/managers/ajax/events/halloween_boiling_cauldron.php"
+            data = {
+                "uh": self.unique_hash,
+                "action": "brew_recipe",
+                "slot": idx,
+                "recipe_type": chosen_recipe,
             }
             self.sess.post(url, data=data)
 
