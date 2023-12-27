@@ -25,6 +25,7 @@ class Bot(object):
         self.keywords = [] if keywords is None else keywords
 
         self.sess = None
+        self.name = None
         user_data = self.refresh_sess()
         self.name = user_data["username"]
         self.unique_hash = user_data['unique_hash']
@@ -62,7 +63,11 @@ class Bot(object):
         res = self.sess.post(user_url, form_data)
         if not res.ok:
             self.raise_res_error(res)
-        user_data = json.loads(res.text)['user']
+        try:
+            user_data = res.json()['user']
+        except KeyError:
+            print(f"Could not find 'user' in response: {res.json()}")
+            raise
         return user_data
 
     def horn(self):
