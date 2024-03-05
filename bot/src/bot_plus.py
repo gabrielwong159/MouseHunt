@@ -3,6 +3,7 @@ import os
 import telebot
 from bs4 import BeautifulSoup
 from requests import Response
+from requests.exceptions import JSONDecodeError
 from bot import Bot
 
 
@@ -415,14 +416,22 @@ class BotPlus(Bot):
             self.purchase_item(trinket_key, 1)
         self.change_trap('trinket', trinket_key)
 
-    def craft_item(self, crafting_items: dict, quantity: int):
+    def craft_item(self, crafting_items: dict, quantity: int) -> bool:
         url = f"{self.base_url}/managers/ajax/users/crafting.php"
         data = {
             "uh": self.unique_hash,
             **crafting_items,
             "craftQty": quantity,
         }
-        self.sess.post(url, data=data)
+        response = self.sess.post(url, data=data)
+        if not response.ok:
+            return False
+        try:
+            return response.json()["success"] == 1
+        except JSONDecodeError:
+            return False
+        except KeyError:
+            return False
 
     def get_trap_components(self, classification: str) -> set:
         assert classification in ['weapon', 'base', 'trinket', 'bait', 'skin']
