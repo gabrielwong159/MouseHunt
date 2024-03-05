@@ -303,6 +303,7 @@ class BotPlus(Bot):
             if is_trinket_armed and armed_trinket == "Grub Scent Charm":
                 return
             self.arm_or_purchase_trinket(trinket_key="grub_scent_trinket")
+            self.change_trap("base", "living_base")
             return
 
         # try to equip super salt charm
@@ -321,11 +322,12 @@ class BotPlus(Bot):
             )
             if is_crafting_successful:
                 self.change_trap("trinket", trinket_key)
+                self.change_trap("base", "smelly_sodium_base")
                 return
 
         # try to equip grub salt charm
         self.arm_or_purchase_trinket("grub_salt_trinket")
-
+        self.change_trap("base", "smelly_sodium_base")
 
     def check_sb_factory(self, user_data: dict):
         if self.get_location(user_data) != 'SUPER|brie+ Factory':
