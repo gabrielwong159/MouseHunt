@@ -1,5 +1,7 @@
 import json
 import os
+from enum import Enum
+
 import telebot
 from bs4 import BeautifulSoup
 from requests import Response
@@ -333,14 +335,40 @@ class BotPlus(Bot):
         if self.get_location(user_data) != 'SUPER|brie+ Factory':
             return
 
-        is_crate_claimable = user_data['quests']['QuestSuperBrieFactory']['factory_atts']['can_claim']
+        url = 'https://www.mousehuntgame.com/managers/ajax/events/birthday_factory.php'
+        quest = user_data["quests"]["QuestSuperBrieFactory"]
+
+        is_crate_claimable = quest["factory_atts"]["can_claim"]
         if is_crate_claimable:
-            url = 'https://www.mousehuntgame.com/managers/ajax/events/birthday_factory.php'
             data = {
                 'uh': self.unique_hash,
                 'action': 'claim_reward',
             }
             self.sess.post(url, data=data)
+
+        class FactoryRooms(Enum):
+            MIXING_ROOM = "mixing_room"
+            BREAK_ROOM = "break_room"
+            PUMPING_ROOM = "pumping_room"
+            QUALITY_ASSURANCE_ROOM = "quality_assurance_room"
+
+        def _change_room(room: FactoryRooms):
+            current_room = quest["factory_atts"]["current_room"]
+            if current_room == room.value:
+                return
+            data = {
+                "uh": self.unique_hash,
+                "action": "pick_room",
+                "room": room.value,
+            }
+            self.sess.post(url, data=data)
+
+        item_qty = {
+            room: int(quest["items"][f"birthday_factory_{room.value}_stat_item"]["quantity"])
+            for room in FactoryRooms
+        }
+        lowest_qty_room = min(item_qty, key=item_qty.get)
+        _change_room(lowest_qty_room)
 
     def check_halloween(self, user_data: dict):
         if self.get_location(user_data) != "Gloomy Greenwood":
