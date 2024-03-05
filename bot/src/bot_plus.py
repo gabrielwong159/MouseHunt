@@ -294,35 +294,38 @@ class BotPlus(Bot):
 
         sand = user_data["quests"]["QuestSandDunes"]["minigame"]["salt_charms_used"]
         print(f"Sand level: {sand}")
-        if sand < self.king_grub_threshold:
-            # try to equip super salt charm
-            print("Attempt to equip super salt charm")
-            if user_data["trinket_name"] == "Super Salt Charm" and user_data["trinket_quantity"] > 0:
-                print(f"Super salt charm already equipped")
-                return
-            self.change_trap("trinket", "disarm")
-            trinket_key = "super_salt_trinket"
-            if trinket_key not in self.get_trap_components("trinket"):
-                print("Need to craft super salt charm")
-                self.craft_item(
-                    crafting_items={
-                        "parts[extra_coarse_salt_crafting_item]": 1,
-                        "parts[essence_b_crafting_item]": 2,
-                        "parts[perfect_orb]": 1,
-                    },
-                    quantity=1,
-                )
-                print("Super salt charm crafted")
-            self.change_trap("trinket", trinket_key)
-            print("Equipped super salt charm")
-        else:
+
+        is_trinket_armed = user_data["trinket_quantity"] > 0
+        armed_trinket = user_data["trinket_name"]
+
+        if sand >= self.king_grub_threshold:
             # equip grub scent charm
-            print("Attemp to equip grub scent charm")
-            if user_data["trinket_name"] == "Grub Scent Charm":
-                print("Grub scent charm already equipped")
+            if is_trinket_armed and armed_trinket == "Grub Scent Charm":
                 return
             self.arm_or_purchase_trinket(trinket_key="grub_scent_trinket")
-            print("Equipped grub scent charm")
+            return
+
+        # try to equip super salt charm
+        if is_trinket_armed and armed_trinket == "Super Salt Charm":
+            return
+        self.change_trap("trinket", "disarm")
+        trinket_key = "super_salt_trinket"
+        if trinket_key not in self.get_trap_components("trinket"):
+            is_crafting_successful = self.craft_item(
+                crafting_items={
+                    "parts[extra_coarse_salt_crafting_item]": 1,
+                    "parts[essence_b_crafting_item]": 2,
+                    "parts[perfect_orb]": 1,
+                },
+                quantity=1,
+            )
+            if is_crafting_successful:
+                self.change_trap("trinket", trinket_key)
+                return
+
+        # try to equip grub salt charm
+        self.arm_or_purchase_trinket("grub_salt_trinket")
+
 
     def check_sb_factory(self, user_data: dict):
         if self.get_location(user_data) != 'SUPER|brie+ Factory':
