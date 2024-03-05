@@ -267,9 +267,7 @@ class BotPlus(Bot):
                 trinket_key = 'shine_trinket'
             else:
                 trinket_key = 'clarity_trinket'
-            if trinket_key not in self.get_trap_components('trinket'):
-                self.purchase_item(trinket_key, 1)
-            self.change_trap('trinket', trinket_key)
+            self.arm_or_purchase_trinket(trinket_key)
             break
 
     def check_lost_city(self, user_data: dict):
@@ -285,9 +283,7 @@ class BotPlus(Bot):
             return
 
         trinket_key = 'searcher_trinket'
-        if trinket_key not in self.get_trap_components('trinket'):
-            self.purchase_item(trinket_key, 1)
-        self.change_trap('trinket', trinket_key)
+        self.arm_or_purchase_trinket(trinket_key)
 
     def check_sand_dunes(self, user_data: dict):
         if self.get_location(user_data) != "Sand Crypts":
@@ -324,11 +320,7 @@ class BotPlus(Bot):
             if user_data["trinket_name"] == "Grub Scent Charm":
                 print("Grub scent charm already equipped")
                 return
-            trinket_key = "grub_scent_trinket"
-            if trinket_key not in self.get_trap_components("trinket"):
-                print("Need to purchase grub scent charm")
-                self.purchase_item(trinket_key, 1)
-            self.change_trap("trinket", trinket_key)
+            self.arm_or_purchase_trinket(trinket_key="grub_scent_trinket")
             print("Equipped grub scent charm")
 
     def check_sb_factory(self, user_data: dict):
@@ -417,6 +409,11 @@ class BotPlus(Bot):
             'is_kings_cart_item': 0,
         }
         self.sess.post(url, data=data)
+
+    def arm_or_purchase_trinket(self, trinket_key: str):
+        if trinket_key not in self.get_trap_components('trinket'):
+            self.purchase_item(trinket_key, 1)
+        self.change_trap('trinket', trinket_key)
 
     def craft_item(self, crafting_items: dict, quantity: int):
         url = f"{self.base_url}/managers/ajax/users/crafting.php"
