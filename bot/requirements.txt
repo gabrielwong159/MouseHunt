@@ -1,3 +1,4 @@
 beautifulsoup4
 requests
+pydantic-settings
 python-telegram-bot<13

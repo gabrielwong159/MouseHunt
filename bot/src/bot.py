@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import datetime
 from typing import List, Tuple
@@ -6,6 +5,8 @@ from typing import List, Tuple
 import requests
 from bs4 import BeautifulSoup
 from requests import Response, Session
+
+from settings import Settings
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -18,20 +19,14 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 class Bot(object):
     base_url = "https://www.mousehuntgame.com"
 
-    def __init__(
-        self,
-        username: str,
-        password: str,
-        trap_check: int,
-        captcha_solver_url: str,
-        keywords: List[str] = None,
-    ):
+    def __init__(self, settings: Settings):
         self.logger = logging.getLogger(__name__)
-        self.username = username
-        self.password = password
-        self.trap_check = trap_check
-        self.captcha_solver_url = captcha_solver_url
-        self.keywords = [] if keywords is None else keywords
+        self.settings = settings
+        self.username = settings.username
+        self.password = settings.password
+        self.trap_check = settings.trap_check
+        self.captcha_solver_url = settings.get_captcha_url()
+        self.keywords = settings.get_keywords()
 
         self.sess = None
         self.name = None

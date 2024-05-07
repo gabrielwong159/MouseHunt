@@ -1,11 +1,10 @@
-import os
 import random
-import re
 import sched
 import time
 from datetime import datetime, timedelta
 
 from bot_plus import BotPlus as Bot
+from settings import Settings
 
 MAX_DELAY = 200
 TRAP_CHECK_PRIORITY = 1
@@ -13,21 +12,8 @@ HORN_PRIORITY = 2
 
 
 def main():
-    username = os.environ["MH_USERNAME"]
-    password = os.environ["MH_PASSWORD"]
-    trap_check = int(os.environ["MH_TRAP_CHECK"])
-    keywords = os.environ.get("MH_KEYWORDS")
-
-    captcha_host = os.environ.get("CAPTCHA_HOST", "localhost")
-    captcha_port = int(os.environ.get("CAPTCHA_PORT", "8080"))
-    captcha_url = f"http://{captcha_host}:{captcha_port}"
-
-    if keywords is None:
-        bot = Bot(username, password, trap_check, captcha_url)
-    else:
-        pattern = r",\s*"
-        keywords = [t for s in keywords.split("\n") for t in re.split(pattern, s)]
-        bot = Bot(username, password, trap_check, captcha_url, keywords)
+    settings = Settings()
+    bot = Bot(settings)
 
     while True:
         day = datetime.now().day
