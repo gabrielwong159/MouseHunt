@@ -1,8 +1,9 @@
 import os
+
 import telegram
 
-token = os.environ.get('TELEGRAM_BOT_TOKEN')
-chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+token = os.environ.get("TELEGRAM_BOT_TOKEN")
+chat_id = os.environ.get("TELEGRAM_CHAT_ID")
 
 if token is not None and chat_id is not None:
     telebot = telegram.Bot(token=token)
