@@ -22,6 +22,9 @@ class BotPlus(Bot):
         self.king_grub = os.environ.get("MH_KING_GRUB", "true").lower() == "true"
         self.king_grub_threshold = int(os.environ.get("MH_KING_GRUB_THRESHOLD", 0))
 
+        self.arcane_trap = os.environ["MH_ARCANE_TRAP"]
+        self.shadow_trap = os.environ["MH_SHADOW_TRAP"]
+
         print("Warpath mode:", "Gargantua" if self.warpath_gargantua else "Commander")
         print("Vrift auto toggle fire:", self.vrift_fire)
 
@@ -45,6 +48,7 @@ class BotPlus(Bot):
         self.check_sb_factory(user_data)
         self.check_halloween(user_data)
         self.check_winter_hunt(user_data)
+        self.check_school_of_sorcery(user_data)
 
         return all_entries, new_entries
 
@@ -458,6 +462,21 @@ class BotPlus(Bot):
         if len(claimable_slots) == 0:
             return
         telebot.send_message(f"Claimable golems: {claimable_slots}")
+
+    def check_school_of_sorcery(self, user_data: dict):
+        if self.get_location(user_data) != "School of Sorcery":
+            return
+
+        quest = user_data["quests"]["QuestSchoolOfSorcery"]
+        expected_power_type = quest["current_course"]["power_type"]
+        current_power_type = user_data["trap_power_type_name"]
+        if current_power_type.lower() == expected_power_type:
+            return
+
+        if expected_power_type == "arcane":
+            self.change_trap("weapon", self.arcane_trap)
+        elif expected_power_type == "shadow":
+            self.change_trap("weapon", self.shadow_trap)
 
     def change_trap(self, classification: str, item_key: str):
         assert classification in ["weapon", "base", "trinket", "bait", "skin"]
