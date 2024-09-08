@@ -28,8 +28,8 @@ class Bot(object):
         self.captcha_solver_url = settings.get_captcha_url()
         self.keywords = settings.get_keywords()
 
-        self.sess = None
         self.name = None
+        self.sess = requests.Session()
         user_data = self.refresh_sess()
         self.name = user_data["username"]
         self.unique_hash = user_data["unique_hash"]
@@ -38,23 +38,7 @@ class Bot(object):
         self.journal_entries = None
         self.update_journal_entries()
 
-    def login(self) -> Session:
-        login_url = f"{Bot.base_url}/managers/ajax/pages/login.php"
-        form_data = {
-            "action": "loginHitGrab",
-            "username": self.username,
-            "password": self.password,
-        }
-
-        sess = requests.Session()
-        res = sess.post(login_url, form_data)
-        if not res.ok:
-            self.raise_res_error(res)
-        self.logger.info("Login success")
-        return sess
-
     def refresh_sess(self) -> dict:
-        self.sess = self.login()
         return self.get_user_data()
 
     def get_user_data(self) -> dict:
