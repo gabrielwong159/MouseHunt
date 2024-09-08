@@ -49,6 +49,7 @@ class BotPlus(Bot):
         self.check_halloween(user_data)
         self.check_winter_hunt(user_data)
         self.check_school_of_sorcery(user_data)
+        self.check_draconic_depths(user_data)
 
         return all_entries, new_entries
 
@@ -477,6 +478,19 @@ class BotPlus(Bot):
             self.change_trap("weapon", self.arcane_trap)
         elif expected_power_type == "shadow":
             self.change_trap("weapon", self.shadow_trap)
+
+    def check_draconic_depths(self, user_data: dict):
+        if self.get_location(user_data) != "Draconic Depths":
+            return
+
+        quest = user_data["quests"]["QuestDraconicDepths"]
+        if quest["in_cavern"]:
+            return
+
+        crucibles = quest["crucible_forge"]["crucibles"]
+        is_max_progress = all(c["is_max_progress"] for c in crucibles)
+        if is_max_progress:
+            telebot.send_message("Draconic Depths: all crucibles at max progress")
 
     def change_trap(self, classification: str, item_key: str):
         assert classification in ["weapon", "base", "trinket", "bait", "skin"]
