@@ -10,6 +10,14 @@ import telebot
 from bot import Bot
 
 
+class TrapClassifications(Enum):
+    WEAPON = "weapon"
+    BASE = "base"
+    TRINKET = "trinket"
+    BAIT = "bait"
+    SKIN = "skin"
+
+
 class BotPlus(Bot):
     def __init__(self, *args, **kwargs):
         self.warpath_gargantua = (
@@ -79,7 +87,7 @@ class BotPlus(Bot):
         else:
             cheese = "gouda_cheese"
 
-        self.change_trap("bait", cheese)
+        self.change_trap(TrapClassifications.BAIT, cheese)
         telebot.send_message(f"{self.name}\nbait empty, now using {cheese}")
 
     def check_location_setup(self, user_data: dict):
@@ -265,7 +273,7 @@ class BotPlus(Bot):
         if streak >= 7 and self.warpath_gargantua:
             telebot.send_message(f"{self.name}\nStreak {streak}, Gargantua mode")
         elif streak >= 6 and not self.warpath_gargantua and len(remaining_types) > 1:
-            self.change_trap("trinket", "flame_march_general_trinket")
+            self.change_trap(TrapClassifications.TRINKET, "flame_march_general_trinket")
             telebot.send_message(
                 f"{self.name}\nStreak {streak}, arming Warpath Commander's charm"
             )
@@ -273,14 +281,14 @@ class BotPlus(Bot):
             if len(remaining_types) == 0:
                 return
             if len(remaining_types) == 1:
-                self.change_trap("trinket", "disarm")
+                self.change_trap(TrapClassifications.TRINKET, "disarm")
                 return
             target_type = min(remaining_types, key=lambda _: _[1])[0]
             if (
                 user_data["trinket_name"] is None
                 or target_type not in user_data["trinket_name"].lower()
             ):
-                self.change_trap("trinket", f"flame_march_{target_type}_trinket")
+                self.change_trap(TrapClassifications.TRINKET, f"flame_march_{target_type}_trinket")
                 telebot.send_message(f"{self.name}\nchanging trinket: {target_type}")
 
     def check_cursed_city(self, user_data: dict):
@@ -295,7 +303,7 @@ class BotPlus(Bot):
                 curse["charm"]["equipped"] for curse in minigame["curses"]
             )
             if is_equipping_minigame_charm:
-                self.change_trap("trinket", "disarm")
+                self.change_trap(TrapClassifications.TRINKET, "disarm")
             return
 
         for curse in minigame["curses"]:
@@ -345,15 +353,15 @@ class BotPlus(Bot):
             if is_trinket_armed and armed_trinket == "Grub Scent Charm":
                 return
             self.arm_or_purchase_trinket(trinket_key="grub_scent_trinket")
-            self.change_trap("base", "living_base")
+            self.change_trap(TrapClassifications.BASE, "living_base")
             return
 
         # try to equip super salt charm
         if is_trinket_armed and armed_trinket == "Super Salt Charm":
             return
-        self.change_trap("trinket", "disarm")
+        self.change_trap(TrapClassifications.TRINKET, "disarm")
         trinket_key = "super_salt_trinket"
-        if trinket_key not in self.get_trap_components("trinket"):
+        if trinket_key not in self.get_trap_components(TrapClassifications.TRINKET):
             is_crafting_successful = self.craft_item(
                 crafting_items={
                     "parts[extra_coarse_salt_crafting_item]": 1,
@@ -363,13 +371,13 @@ class BotPlus(Bot):
                 quantity=1,
             )
             if is_crafting_successful:
-                self.change_trap("trinket", trinket_key)
-                self.change_trap("base", "smelly_sodium_base")
+                self.change_trap(TrapClassifications.TRINKET, trinket_key)
+                self.change_trap(TrapClassifications.BASE, "smelly_sodium_base")
                 return
 
         # try to equip grub salt charm
         self.arm_or_purchase_trinket("grub_salt_trinket")
-        self.change_trap("base", "smelly_sodium_base")
+        self.change_trap(TrapClassifications.BASE, "smelly_sodium_base")
 
     def check_sb_factory(self, user_data: dict):
         if self.get_location(user_data) != "SUPER|brie+ Factory":
@@ -475,9 +483,9 @@ class BotPlus(Bot):
             return
 
         if expected_power_type == "arcane":
-            self.change_trap("weapon", self.arcane_trap)
+            self.change_trap(TrapClassifications.WEAPON, self.arcane_trap)
         elif expected_power_type == "shadow":
-            self.change_trap("weapon", self.shadow_trap)
+            self.change_trap(TrapClassifications.WEAPON, self.shadow_trap)
 
     def check_draconic_depths(self, user_data: dict):
         if self.get_location(user_data) != "Draconic Depths":
@@ -492,9 +500,7 @@ class BotPlus(Bot):
         if is_max_progress:
             telebot.send_message("Draconic Depths: all crucibles at max progress")
 
-    def change_trap(self, classification: str, item_key: str):
-        assert classification in ["weapon", "base", "trinket", "bait", "skin"]
-
+    def change_trap(self, classification: TrapClassifications, item_key: str):
         if item_key not in "disarm":
             available_components = self.get_trap_components(classification)
             if item_key not in available_components:
@@ -504,7 +510,7 @@ class BotPlus(Bot):
                 return
 
         url = f"{Bot.base_url}/managers/ajax/users/changetrap.php"
-        data = {"uh": self.unique_hash, classification: item_key}
+        data = {"uh": self.unique_hash, classification.value: item_key}
         self.sess.post(url, data=data)
 
     def purchase_item(self, item_key: str, quantity: int):
@@ -519,9 +525,9 @@ class BotPlus(Bot):
         self.sess.post(url, data=data)
 
     def arm_or_purchase_trinket(self, trinket_key: str):
-        if trinket_key not in self.get_trap_components("trinket"):
+        if trinket_key not in self.get_trap_components(TrapClassifications.TRINKET):
             self.purchase_item(trinket_key, 1)
-        self.change_trap("trinket", trinket_key)
+        self.change_trap(TrapClassifications.TRINKET, trinket_key)
 
     def craft_item(self, crafting_items: dict, quantity: int) -> bool:
         url = f"{self.base_url}/managers/ajax/users/crafting.php"
@@ -540,11 +546,9 @@ class BotPlus(Bot):
         except KeyError:
             return False
 
-    def get_trap_components(self, classification: str) -> set:
-        assert classification in ["weapon", "base", "trinket", "bait", "skin"]
-
+    def get_trap_components(self, classification: TrapClassifications) -> set:
         url = f"{Bot.base_url}/managers/ajax/users/gettrapcomponents.php"
-        data = {"uh": self.unique_hash, "classification": classification}
+        data = {"uh": self.unique_hash, "classification": classification.value}
         res = self.sess.post(url, data=data)
 
         components = json.loads(res.text)["components"]
