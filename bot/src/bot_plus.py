@@ -30,6 +30,7 @@ class BotPlus(Bot):
         self.king_grub = os.environ.get("MH_KING_GRUB", "true").lower() == "true"
         self.king_grub_threshold = int(os.environ.get("MH_KING_GRUB_THRESHOLD", 0))
 
+        self.auto_apprentice_ambert = os.environ.get("MH_AUTO_APPRENTICE_AMBERT", "false").lower() == "true"
         self.arcane_trap = os.environ["MH_ARCANE_TRAP"]
         self.shadow_trap = os.environ["MH_SHADOW_TRAP"]
 
@@ -475,6 +476,13 @@ class BotPlus(Bot):
     def check_school_of_sorcery(self, user_data: dict):
         if self.get_location(user_data) != "School of Sorcery":
             return
+
+        if self.auto_apprentice_ambert:
+            current_bait = user_data["bait_name"]
+            if current_bait == "Gouda Cheese":
+                target_bait = "apprentice_ambert_cheese"
+                if target_bait in self.get_trap_components(TrapClassifications.BAIT):
+                    self.change_trap(TrapClassifications.BAIT, target_bait)
 
         quest = user_data["quests"]["QuestSchoolOfSorcery"]
         expected_power_type = quest["current_course"]["power_type"]
