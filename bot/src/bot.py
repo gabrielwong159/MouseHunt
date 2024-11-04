@@ -38,24 +38,30 @@ class Bot(object):
         self.update_journal_entries()
 
     def refresh_sess(self) -> dict:
-        return self.get_user_data()
-
-    def get_user_data(self) -> dict:
+        self.sess = requests.Session()
         user_url = f"{Bot.base_url}/managers/ajax/users/session.php"
         form_data = {
             "action": "loginHitGrab",
             "username": self.username,
             "password": self.password,
         }
-        res = self.sess.post(user_url, form_data)
-        if not res.ok:
-            self.raise_res_error(res)
-        try:
-            user_data = res.json()["user"]
-        except KeyError:
-            print(f"Could not find 'user' in response: {res.json()}")
-            raise
-        return user_data
+        response = self.sess.post(user_url, form_data)
+        if not response.ok:
+            self.raise_res_error(response)
+        return response.json()["user"]
+
+    def get_user_data(self) -> dict:
+        url = f"{self.base_url}/managers/ajax/pages/page.php"
+        data = {
+            "page_class": "Camp",
+            "page_arguments[show_loading]": False,
+            "last_read_journal_entry": 0,
+            "uh": self.unique_hash,
+        }
+        response = self.sess.post(url, data)
+        if not response.ok:
+            self.raise_res_error(response)
+        return response.json()["user"]
 
     def horn(self):
         horn_url = f"{Bot.base_url}/turn.php"
