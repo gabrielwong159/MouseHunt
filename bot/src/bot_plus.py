@@ -579,5 +579,5 @@ class BotPlus(Bot):
 
     def raise_res_error(self, res: Response):
         self.logger.error(res.text)
-        telebot.send_message(f"{self.name}\nERROR: {res.text}")
+        telebot.send_message(f"ERROR: {res.text}")
         super().raise_res_error(res)

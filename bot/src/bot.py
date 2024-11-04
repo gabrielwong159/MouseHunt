@@ -28,7 +28,6 @@ class Bot(object):
         self.captcha_solver_url = settings.get_captcha_url()
         self.keywords = settings.get_keywords()
 
-        self.name = None
         self.sess = requests.Session()
         user_data = self.refresh_sess()
         self.name = user_data["username"]
