@@ -20,6 +20,8 @@ class TrapClassifications(Enum):
 
 class BotPlus(Bot):
     def __init__(self, *args, **kwargs):
+        self.auto_bait = os.environ.get("MH_AUTO_BAIT", "")
+
         self.warpath_gargantua = (
             os.environ.get("MH_WARPATH_GARGANTUA", "true").lower() == "true"
         )
@@ -75,6 +77,13 @@ class BotPlus(Bot):
         if bait_qty > 0:
             return
 
+        telebot.send_message(f"{self.name}\nbait empty")
+        if self.auto_bait == "":
+            return
+
+        if self.get_location(user_data) == "Draconic Depths":
+            return
+
         is_rift = user_data["environment_name"].endswith("Rift")
         is_queso = user_data["environment_name"] in [
             "Prickly Plains",
@@ -86,10 +95,9 @@ class BotPlus(Bot):
         elif is_queso:
             cheese = "bland_queso_cheese"
         else:
-            cheese = "gouda_cheese"
+            cheese = self.auto_bait
 
         self.change_trap(TrapClassifications.BAIT, cheese)
-        telebot.send_message(f"{self.name}\nbait empty, now using {cheese}")
 
     def check_location_setup(self, user_data: dict):
         # iceberg, muridae, living garden
