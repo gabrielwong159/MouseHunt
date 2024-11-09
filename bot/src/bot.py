@@ -1,12 +1,14 @@
 import logging
 from datetime import datetime
+from io import BytesIO
 from typing import List, Tuple
 
 import cloudscraper
-import requests
+from PIL import Image
 from bs4 import BeautifulSoup
-from requests import Response, Session
+from requests import Response
 
+from services.captcha import CaptchaService
 from settings import Settings
 
 logging.basicConfig(
@@ -21,6 +23,7 @@ class Bot(object):
     base_url = "https://www.mousehuntgame.com"
 
     def __init__(self, settings: Settings):
+        self._captcha_service = CaptchaService()
         self.logger = logging.getLogger(__name__)
         self.settings = settings
         self.username = settings.username
@@ -121,7 +124,12 @@ class Bot(object):
 
     def solve_captcha(self):
         captcha_url = self.get_captcha_url()
-        answer = requests.get(self.captcha_solver_url, params={"url": captcha_url}).text
+        response = self.sess.get(captcha_url)
+        if not response.ok:
+            self.raise_res_error(response)
+
+        image = Image.open(BytesIO(response.content))
+        answer = self._captcha_service.solve_captcha(image)
         self.logger.info(f"captcha attempt: {captcha_url=} {answer=}")
 
         url = f"{Bot.base_url}/managers/ajax/users/puzzle.php"
