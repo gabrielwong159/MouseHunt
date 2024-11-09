@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import List, Tuple
 
+import cloudscraper
 import requests
 from bs4 import BeautifulSoup
 from requests import Response, Session
@@ -28,7 +29,7 @@ class Bot(object):
         self.captcha_solver_url = settings.get_captcha_url()
         self.keywords = settings.get_keywords()
 
-        self.sess = requests.Session()
+        self.sess: cloudscraper.CloudScraper  # created in refresh_sess
         user_data = self.refresh_sess()
         self.name = user_data["username"]
         self.unique_hash = user_data["unique_hash"]
@@ -38,7 +39,7 @@ class Bot(object):
         self.update_journal_entries()
 
     def refresh_sess(self) -> dict:
-        self.sess = requests.Session()
+        self.sess = cloudscraper.create_scraper()
         user_url = f"{Bot.base_url}/managers/ajax/users/session.php"
         form_data = {
             "action": "loginHitGrab",
