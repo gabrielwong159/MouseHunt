@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 from requests import Response
 from requests.exceptions import JSONDecodeError
 
-import telebot
-from bot import Bot
+from src import telebot
+from src.bot import Bot
 
 
 class TrapClassifications(Enum):

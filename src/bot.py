@@ -8,8 +8,8 @@ from PIL import Image
 from bs4 import BeautifulSoup
 from requests import Response
 
-from clients.captcha import CaptchaClient
-from settings import Settings
+from src.clients.captcha import CaptchaClient
+from src.settings import Settings
 
 logging.basicConfig(
     level=logging.DEBUG,

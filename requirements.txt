@@ -1,9 +1,0 @@
-beautifulsoup4
-requests
-pydantic-settings
-python-telegram-bot<13
-cloudscraper
-numpy
-opencv-python-headless
-pillow
-pytesseract

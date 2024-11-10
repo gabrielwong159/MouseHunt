@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "mousehunt"
+version = "0.1.0"
+description = ""
+authors = ["Gabriel Wong <gabrielwong159@gmail.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+python-telegram-bot = "<13"
+requests = "^2.32.3"
+beautifulsoup4 = "^4.12.3"
+cloudscraper = "^1.2.71"
+numpy = "^2.0.2"
+pillow = "^11.0.0"
+opencv-python-headless = "^4.10.0.84"
+pytesseract = "^0.3.13"
+pydantic-settings = "^2.6.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

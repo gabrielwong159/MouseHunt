@@ -3,8 +3,8 @@ import sched
 import time
 from datetime import datetime, timedelta
 
-from bot_plus import BotPlus as Bot
-from settings import Settings
+from src.bot_plus import BotPlus as Bot
+from src.settings import Settings
 
 MAX_DELAY = 200
 TRAP_CHECK_PRIORITY = 1
