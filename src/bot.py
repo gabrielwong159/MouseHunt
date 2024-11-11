@@ -25,10 +25,9 @@ class Bot(object):
     def __init__(self, settings: Settings):
         self._captcha_client = CaptchaClient()
         self.logger = logging.getLogger(__name__)
-        self.settings = settings
-        self.username = settings.username
-        self.password = settings.password
-        self.trap_check = settings.trap_check
+        self.username = settings.mh_username
+        self.password = settings.mh_password
+        self.trap_check = settings.mh_trap_check
         self.keywords = settings.get_keywords()
 
         self.sess: cloudscraper.CloudScraper  # created in refresh_sess
