@@ -1,4 +1,4 @@
-import telegram
+import telegram  # type: ignore
 
 
 class TelegramBotClient:

@@ -1,9 +1,8 @@
 import logging
 from datetime import datetime
 from io import BytesIO
-from typing import List, Tuple
 
-import cloudscraper
+import cloudscraper  # type: ignore
 from PIL import Image
 from bs4 import BeautifulSoup
 from requests import Response
@@ -36,7 +35,7 @@ class Bot(object):
         self.unique_hash = user_data["unique_hash"]
         self.user_id = user_data["user_id"]
 
-        self.journal_entries = None
+        self.journal_entries: list[str] = []
         self.update_journal_entries()
 
     def refresh_sess(self) -> dict:
@@ -79,12 +78,12 @@ class Bot(object):
             self.raise_res_error(res)
         return BeautifulSoup(res.text, "html.parser")
 
-    def update_journal_entries(self) -> Tuple[List[str], List[str]]:
+    def update_journal_entries(self) -> tuple[list[str], list[str]]:
         curr = self.journal_entries
         new = self.get_journal_entries()
 
         if curr is None:  # skip diff check at initial startup
-            diff = []
+            diff: list[str] = []
         else:
             ptr = 0
             while ptr < len(new) and new[ptr] not in curr:
@@ -94,7 +93,7 @@ class Bot(object):
         self.journal_entries = new
         return new, diff
 
-    def get_journal_entries(self) -> List[str]:
+    def get_journal_entries(self) -> list[str]:
         self.check_and_solve_captcha()
         soup = self.get_page_soup()
         journal_entries = soup.find_all("div", class_="entry")

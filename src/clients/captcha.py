@@ -2,7 +2,7 @@ import string
 
 import cv2
 import numpy as np
-import pytesseract
+import pytesseract  # type: ignore
 from PIL import Image
 
 

@@ -1,9 +1,9 @@
 import json
 import os
 from enum import Enum
-from typing import Optional
+from typing import Optional, cast
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from requests import Response
 from requests.exceptions import JSONDecodeError
 
@@ -21,7 +21,11 @@ class TrapClassifications(Enum):
 
 
 class BotPlus(Bot):
-    def __init__(self, settings: Settings, telegram_bot_client: Optional[TelegramBotClient] = None):
+    def __init__(
+        self,
+        settings: Settings,
+        telegram_bot_client: Optional[TelegramBotClient] = None,
+    ):
         self._telegram_bot_client = telegram_bot_client
 
         self.auto_bait = os.environ.get("MH_AUTO_BAIT", "")
@@ -36,7 +40,9 @@ class BotPlus(Bot):
         self.king_grub = os.environ.get("MH_KING_GRUB", "true").lower() == "true"
         self.king_grub_threshold = int(os.environ.get("MH_KING_GRUB_THRESHOLD", 0))
 
-        self.auto_apprentice_ambert = os.environ.get("MH_AUTO_APPRENTICE_AMBERT", "false").lower() == "true"
+        self.auto_apprentice_ambert = (
+            os.environ.get("MH_AUTO_APPRENTICE_AMBERT", "false").lower() == "true"
+        )
         self.arcane_trap = os.environ["MH_ARCANE_TRAP"]
         self.shadow_trap = os.environ["MH_SHADOW_TRAP"]
 
@@ -187,7 +193,7 @@ class BotPlus(Bot):
         if not self.vrift_fire:
             return
 
-        message = None
+        message = ""
         if floor % 8 != 0:
             if is_fire_active:
                 toggle_fire()
@@ -256,7 +262,7 @@ class BotPlus(Bot):
 
         soup = self.get_environment_hud(user_data)
 
-        main_hud_div = soup.find("div", class_="warpathHUD")
+        main_hud_div = cast(Tag, soup.find("div", class_="warpathHUD"))
         for wave in ["wave_1", "wave_2", "wave_3"]:
             if wave in main_hud_div["class"]:
                 break
@@ -271,18 +277,17 @@ class BotPlus(Bot):
             suffix = "_epic"
         popn_class = "warpathHUD-wave-mouse-population"
         desert_types = ["warrior", "scout", "archer"]
-        n_desert = {
-            t: int(
-                soup.find("div", class_=f"warpathHUD-wave {wave}")
-                .find("div", class_=f"desert_{t}{suffix}")
-                .find("div", class_=popn_class)
-                .text
-            )
-            for t in desert_types
-        }
+
+        n_desert = {}
+        for t in desert_types:
+            div = cast(Tag, soup.find("div", class_=f"warpathHUD-wave {wave}"))
+            div = cast(Tag, div.find("div", class_=f"desert_{t}{suffix}"))
+            div = cast(Tag, div.find("div", class_=popn_class))
+            n_desert[t] = int(div.text)
         remaining_types = [_ for _ in n_desert.items() if _[1] > 0]
 
-        streak = int(soup.find("div", class_="warpathHUD-streak-quantity").text)
+        div = cast(Tag, soup.find("div", class_="warpathHUD-streak-quantity"))
+        streak = int(div.text)
         if streak >= 7 and self.warpath_gargantua:
             self._send_telegram_message(f"{self.name}\nStreak {streak}, Gargantua mode")
         elif streak >= 6 and not self.warpath_gargantua and len(remaining_types) > 1:
@@ -301,8 +306,12 @@ class BotPlus(Bot):
                 user_data["trinket_name"] is None
                 or target_type not in user_data["trinket_name"].lower()
             ):
-                self.change_trap(TrapClassifications.TRINKET, f"flame_march_{target_type}_trinket")
-                self._send_telegram_message(f"{self.name}\nchanging trinket: {target_type}")
+                self.change_trap(
+                    TrapClassifications.TRINKET, f"flame_march_{target_type}_trinket"
+                )
+                self._send_telegram_message(
+                    f"{self.name}\nchanging trinket: {target_type}"
+                )
 
     def check_cursed_city(self, user_data: dict):
         if self.get_location(user_data) != "Cursed City":
@@ -430,7 +439,7 @@ class BotPlus(Bot):
             )
             for room in FactoryRooms
         }
-        lowest_qty_room = min(item_qty, key=item_qty.get)
+        lowest_qty_room = min(item_qty, key=item_qty.get)  # type: ignore
         _change_room(lowest_qty_room)
 
     def check_halloween(self, user_data: dict):
@@ -518,7 +527,9 @@ class BotPlus(Bot):
         crucibles = quest["crucible_forge"]["crucibles"]
         is_max_progress = all(c["is_max_progress"] for c in crucibles)
         if is_max_progress:
-            self._send_telegram_message("Draconic Depths: all crucibles at max progress")
+            self._send_telegram_message(
+                "Draconic Depths: all crucibles at max progress"
+            )
 
     def change_trap(self, classification: TrapClassifications, item_key: str):
         if item_key not in "disarm":

@@ -1,3 +1,4 @@
+# type: ignore
 import sys
 
 sys.path.insert(0, "..")
