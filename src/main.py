@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timedelta
 
 from src.bot_plus import BotPlus as Bot
+from src.clients.telegram_bot import TelegramBotClient
 from src.settings import Settings
 
 MAX_DELAY = 200
@@ -13,7 +14,14 @@ HORN_PRIORITY = 2
 
 def main():
     settings = Settings()
-    bot = Bot(settings)
+    if settings.telegram_bot_token != "" and settings.telegram_chat_id != "":
+        telegram_bot_client = TelegramBotClient(
+            token=settings.telegram_bot_token,
+            chat_id=settings.telegram_chat_id,
+        )
+    else:
+        telegram_bot_client = None
+    bot = Bot(settings, telegram_bot_client)
 
     while True:
         day = datetime.now().day

@@ -1,13 +1,15 @@
 import json
 import os
 from enum import Enum
+from typing import Optional
 
 from bs4 import BeautifulSoup
 from requests import Response
 from requests.exceptions import JSONDecodeError
 
-from src import telebot
 from src.bot import Bot
+from src.clients.telegram_bot import TelegramBotClient
+from src.settings import Settings
 
 
 class TrapClassifications(Enum):
@@ -19,7 +21,9 @@ class TrapClassifications(Enum):
 
 
 class BotPlus(Bot):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, settings: Settings, telegram_bot_client: Optional[TelegramBotClient] = None):
+        self._telegram_bot_client = telegram_bot_client
+
         self.auto_bait = os.environ.get("MH_AUTO_BAIT", "")
 
         self.warpath_gargantua = (
@@ -39,7 +43,7 @@ class BotPlus(Bot):
         print("Warpath mode:", "Gargantua" if self.warpath_gargantua else "Commander")
         print("Vrift auto toggle fire:", self.vrift_fire)
 
-        super().__init__(*args, **kwargs)
+        super().__init__(settings)
 
     def update_journal_entries(self):
         all_entries, new_entries = super().update_journal_entries()
@@ -69,7 +73,7 @@ class BotPlus(Bot):
             self.logger.info(f"\n{entry}\n")
             for keyword in self.keywords:
                 if keyword in entry:
-                    telebot.send_message(f"{self.name}\n{entry}")
+                    self._send_telegram_message(f"{self.name}\n{entry}")
                     break
 
     def check_bait_empty(self, user_data: dict):
@@ -77,7 +81,7 @@ class BotPlus(Bot):
         if bait_qty > 0:
             return
 
-        telebot.send_message(f"{self.name}\nbait empty")
+        self._send_telegram_message(f"{self.name}\nbait empty")
         if self.auto_bait == "":
             return
 
@@ -115,7 +119,7 @@ class BotPlus(Bot):
         )
         if any([incorrect_queso, incorrect_frift]):
             message = f"Unexpected setup in {location}"
-            telebot.send_message(f"{self.name}\n{message}")
+            self._send_telegram_message(f"{self.name}\n{message}")
 
     def check_queso_river(self, user_data: dict):
         if self.get_location(user_data) != "Queso River":
@@ -156,7 +160,7 @@ class BotPlus(Bot):
         if quest_data["chamber_status"] != "open":
             return
         portal_names = ", ".join(portal["name"] for portal in quest_data["portals"])
-        telebot.send_message(f"{self.name}\nPortals: {portal_names}")
+        self._send_telegram_message(f"{self.name}\nPortals: {portal_names}")
 
     def check_vrift(self, user_data: dict):
         if self.get_location(user_data) != "Valour Rift":
@@ -178,7 +182,7 @@ class BotPlus(Bot):
 
         if floor % 8 == 0:
             message = f"At floor {floor}"
-            telebot.send_message(f"{self.name}\n{message}")
+            self._send_telegram_message(f"{self.name}\n{message}")
 
         if not self.vrift_fire:
             return
@@ -199,7 +203,7 @@ class BotPlus(Bot):
 
         if message is not None:
             print(message)
-            telebot.send_message(f"{self.name}\n{message}")
+            self._send_telegram_message(f"{self.name}\n{message}")
 
     def check_mountain(self, user_data: dict):
         if self.get_location(user_data) != "Mountain":
@@ -280,10 +284,10 @@ class BotPlus(Bot):
 
         streak = int(soup.find("div", class_="warpathHUD-streak-quantity").text)
         if streak >= 7 and self.warpath_gargantua:
-            telebot.send_message(f"{self.name}\nStreak {streak}, Gargantua mode")
+            self._send_telegram_message(f"{self.name}\nStreak {streak}, Gargantua mode")
         elif streak >= 6 and not self.warpath_gargantua and len(remaining_types) > 1:
             self.change_trap(TrapClassifications.TRINKET, "flame_march_general_trinket")
-            telebot.send_message(
+            self._send_telegram_message(
                 f"{self.name}\nStreak {streak}, arming Warpath Commander's charm"
             )
         elif streak == 0 and self.warpath_wave_charm:
@@ -298,7 +302,7 @@ class BotPlus(Bot):
                 or target_type not in user_data["trinket_name"].lower()
             ):
                 self.change_trap(TrapClassifications.TRINKET, f"flame_march_{target_type}_trinket")
-                telebot.send_message(f"{self.name}\nchanging trinket: {target_type}")
+                self._send_telegram_message(f"{self.name}\nchanging trinket: {target_type}")
 
     def check_cursed_city(self, user_data: dict):
         if self.get_location(user_data) != "Cursed City":
@@ -479,7 +483,7 @@ class BotPlus(Bot):
 
         if len(claimable_slots) == 0:
             return
-        telebot.send_message(f"Claimable golems: {claimable_slots}")
+        self._send_telegram_message(f"Claimable golems: {claimable_slots}")
 
     def check_school_of_sorcery(self, user_data: dict):
         if self.get_location(user_data) != "School of Sorcery":
@@ -514,13 +518,13 @@ class BotPlus(Bot):
         crucibles = quest["crucible_forge"]["crucibles"]
         is_max_progress = all(c["is_max_progress"] for c in crucibles)
         if is_max_progress:
-            telebot.send_message("Draconic Depths: all crucibles at max progress")
+            self._send_telegram_message("Draconic Depths: all crucibles at max progress")
 
     def change_trap(self, classification: TrapClassifications, item_key: str):
         if item_key not in "disarm":
             available_components = self.get_trap_components(classification)
             if item_key not in available_components:
-                telebot.send_message(
+                self._send_telegram_message(
                     f"{self.name}\ncannot find {classification}: {item_key}"
                 )
                 return
@@ -579,5 +583,9 @@ class BotPlus(Bot):
 
     def raise_res_error(self, res: Response):
         self.logger.error(res.text)
-        telebot.send_message(f"ERROR: {res.text}")
+        self._send_telegram_message(f"ERROR: {res.text}")
         super().raise_res_error(res)
+
+    def _send_telegram_message(self, message: str):
+        if self._telegram_bot_client is not None:
+            self._telegram_bot_client.send_message(message)
