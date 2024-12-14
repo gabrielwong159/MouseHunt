@@ -69,6 +69,7 @@ class BotPlus(Bot):
         self.check_sb_factory(user_data)
         self.check_halloween(user_data)
         self.check_winter_hunt(user_data)
+        self.check_advent_calendar(user_data)
         self.check_school_of_sorcery(user_data)
         self.check_draconic_depths(user_data)
 
@@ -493,6 +494,20 @@ class BotPlus(Bot):
         if len(claimable_slots) == 0:
             return
         self._send_telegram_message(f"Claimable golems: {claimable_slots}")
+
+    def check_advent_calendar(self, user_data: dict):
+        quest_data = user_data["quests"]["MiniEventAdventCalendar"]
+        if not quest_data["has_unclaimed_gifts"]:
+            return
+        for gift in quest_data["gifts"]:
+            if gift["can_claim"]:
+                url = "https://www.mousehuntgame.com/managers/ajax/events/advent_calendar.php"
+                data = {
+                    "uh": self.unique_hash,
+                    "action": "claim",
+                    "gift": gift["gift"],
+                }
+                self.sess.post(url, data=data)
 
     def check_school_of_sorcery(self, user_data: dict):
         if self.get_location(user_data) != "School of Sorcery":
