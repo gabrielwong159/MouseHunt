@@ -496,7 +496,9 @@ class BotPlus(Bot):
         self._send_telegram_message(f"Claimable golems: {claimable_slots}")
 
     def check_advent_calendar(self, user_data: dict):
-        quest_data = user_data["quests"]["MiniEventAdventCalendar"]
+        quest_data = user_data["quests"].get("MiniEventAdventCalendar")
+        if quest_data is None:
+            return
         if not quest_data["has_unclaimed_gifts"]:
             return
         for gift in quest_data["gifts"]:
