@@ -423,6 +423,14 @@ class BotPlus(Bot):
             PUMPING_ROOM = "pumping_room"
             QUALITY_ASSURANCE_ROOM = "quality_assurance_room"
 
+            def to_item(self) -> str:
+                return f"birthday_factory_{self.value}_stat_item"
+
+            @classmethod
+            def from_item(cls, item: str) -> "FactoryRooms":
+                room_type = item.replace("birthday_factory_", "").replace("_stat_item", "")
+                return cls(room_type)
+
         def _change_room(room: FactoryRooms):
             current_room = quest["factory_atts"]["current_room"]
             if current_room == room.value:
@@ -434,14 +442,55 @@ class BotPlus(Bot):
             }
             self.sess.post(url, data=data)
 
-        item_qty = {
-            room: int(
-                quest["items"][f"birthday_factory_{room.value}_stat_item"]["quantity"]
-            )
-            for room in FactoryRooms
-        }
-        lowest_qty_room = min(item_qty, key=item_qty.get)  # type: ignore
-        _change_room(lowest_qty_room)
+        is_upgrade_complete = all(
+            quest["factory_atts"]["level"][room.value] == 5 for room in FactoryRooms
+        )
+        if is_upgrade_complete:
+            item_qty = {
+                room: int(
+                    quest["items"][room.to_item()]["quantity"]
+                )
+                for room in FactoryRooms
+            }
+            lowest_qty_room = min(item_qty, key=item_qty.get)  # type: ignore
+            _change_room(lowest_qty_room)
+        else:
+            priority_order = [
+                FactoryRooms.PUMPING_ROOM,
+                FactoryRooms.BREAK_ROOM,
+                FactoryRooms.MIXING_ROOM,
+                FactoryRooms.QUALITY_ASSURANCE_ROOM,
+            ]
+
+            room_data = {
+                room["type"]: room for room in quest["factory_atts"]["room_data"]
+            }
+            for room in priority_order:
+                room_info = room_data[room.value]
+                if room_info["can_upgrade"]:
+                    data = {
+                        "uh": self.unique_hash,
+                        "action": "upgrade_room",
+                        "room": room.value,
+                    }
+                    self.sess.post(url, data=data)
+                    break
+                elif room_info["level"] < 5:
+                    # Check what resources we need
+                    next_level = room_info["levels"][room_info["level"]]
+                    needed_items = {}
+
+                    for item_type, amount in next_level["cost"].items():
+                        current_qty = int(quest["items"][item_type]["quantity"])
+                        if current_qty < amount:
+                            needed_items[item_type] = amount - current_qty
+
+                    if needed_items:
+                        # Find the item we need most and go to its room
+                        most_needed = max(needed_items.items(), key=lambda x: x[1])
+                        target_room = FactoryRooms.from_item(most_needed[0])
+                        _change_room(target_room)
+                    break
 
     def check_halloween(self, user_data: dict):
         if self.get_location(user_data) != "Gloomy Greenwood":
