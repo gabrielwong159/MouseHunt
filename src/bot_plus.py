@@ -452,8 +452,9 @@ class BotPlus(Bot):
                 )
                 for room in FactoryRooms
             }
-            lowest_qty_room = min(item_qty, key=item_qty.get)  # type: ignore
-            _change_room(lowest_qty_room)
+            if max(item_qty.values()) - min(item_qty.values()) >= 10:
+                lowest_qty_room = min(item_qty, key=item_qty.get)  # type: ignore
+                _change_room(lowest_qty_room)
         else:
             priority_order = [
                 FactoryRooms.PUMPING_ROOM,
