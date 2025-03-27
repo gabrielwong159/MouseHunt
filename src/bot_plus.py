@@ -486,10 +486,13 @@ class BotPlus(Bot):
                             needed_items[item_type] = amount - current_qty
 
                     if needed_items:
-                        # Find the item we need most and go to its room
-                        most_needed = max(needed_items.items(), key=lambda x: x[1])
-                        target_room = FactoryRooms.from_item(most_needed[0])
-                        _change_room(target_room)
+                        # Only change room if we're not already in a room that produces something we need
+                        current_room = FactoryRooms(quest["factory_atts"]["current_room"])
+                        if current_room.to_item() not in needed_items:
+                            # Find the item we need most and go to its room
+                            most_needed = max(needed_items.items(), key=lambda x: x[1])
+                            target_room = FactoryRooms.from_item(most_needed[0])
+                            _change_room(target_room)
                     break
 
     def check_halloween(self, user_data: dict):
