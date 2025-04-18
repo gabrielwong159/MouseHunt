@@ -39,8 +39,6 @@ def main():
 
 
 def horn_loop(bot: Bot, s: sched.scheduler, curr_day: int):
-    bot.refresh_sess()
-
     secs_to_next_hunt = bot.get_user_data()["next_activeturn_seconds"]
     if secs_to_next_hunt > 0:
         arbitrary_delay = 5
@@ -68,7 +66,9 @@ def horn_loop(bot: Bot, s: sched.scheduler, curr_day: int):
 
 
 def trap_check_loop(bot: Bot, s: sched.scheduler, curr_day: int):
-    bot.refresh_sess()
+    # TODO: refresh the data for legacy reasons, remove this when we're sure we
+    #  don't need it
+    bot.get_user_data()
 
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:

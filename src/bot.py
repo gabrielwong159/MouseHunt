@@ -30,7 +30,7 @@ class Bot(object):
         self.trap_check = settings.mh_trap_check
         self.keywords = settings.get_keywords()
 
-        user_data = self.refresh_sess()
+        user_data = self.get_user_data()
         self.name = user_data["username"]
         self.unique_hash = user_data["unique_hash"]
         self.user_id = user_data["user_id"]
@@ -38,22 +38,9 @@ class Bot(object):
         self.journal_entries: list[str] = []
         self.update_journal_entries()
 
-    def refresh_sess(self) -> dict:
+    def get_user_data(self) -> dict:
         self._game_client.refresh_user_data()
         return self._game_client._user_data.model_dump()
-
-    def get_user_data(self) -> dict:
-        url = f"{self.base_url}/managers/ajax/pages/page.php"
-        data = {
-            "page_class": "Camp",
-            "page_arguments[show_loading]": False,
-            "last_read_journal_entry": 0,
-            "uh": self.unique_hash,
-        }
-        response = self._game_client._session.post(url, data)
-        if not response.ok:
-            self.raise_res_error(response)
-        return response.json()["user"]
 
     def horn(self):
         horn_url = f"{Bot.base_url}/turn.php"
