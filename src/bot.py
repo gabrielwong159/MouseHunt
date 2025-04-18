@@ -2,12 +2,12 @@ import logging
 from datetime import datetime
 from io import BytesIO
 
-import cloudscraper  # type: ignore
 from PIL import Image
 from bs4 import BeautifulSoup
 from requests import Response
 
 from src.clients.captcha import CaptchaClient
+from src.clients.game import GameClient
 from src.settings import Settings
 
 logging.basicConfig(
@@ -23,13 +23,13 @@ class Bot(object):
 
     def __init__(self, settings: Settings):
         self._captcha_client = CaptchaClient()
+        self._game_client = GameClient(settings, self._captcha_client)
         self.logger = logging.getLogger(__name__)
         self.username = settings.mh_username
         self.password = settings.mh_password
         self.trap_check = settings.mh_trap_check
         self.keywords = settings.get_keywords()
 
-        self.sess: cloudscraper.CloudScraper  # created in refresh_sess
         user_data = self.refresh_sess()
         self.name = user_data["username"]
         self.unique_hash = user_data["unique_hash"]
@@ -39,17 +39,8 @@ class Bot(object):
         self.update_journal_entries()
 
     def refresh_sess(self) -> dict:
-        self.sess = cloudscraper.create_scraper()
-        user_url = f"{Bot.base_url}/managers/ajax/users/session.php"
-        form_data = {
-            "action": "loginHitGrab",
-            "username": self.username,
-            "password": self.password,
-        }
-        response = self.sess.post(user_url, form_data)
-        if not response.ok:
-            self.raise_res_error(response)
-        return response.json()["user"]
+        self._game_client.refresh_user_data()
+        return self._game_client._user_data.model_dump()
 
     def get_user_data(self) -> dict:
         url = f"{self.base_url}/managers/ajax/pages/page.php"
@@ -59,21 +50,21 @@ class Bot(object):
             "last_read_journal_entry": 0,
             "uh": self.unique_hash,
         }
-        response = self.sess.post(url, data)
+        response = self._game_client._session.post(url, data)
         if not response.ok:
             self.raise_res_error(response)
         return response.json()["user"]
 
     def horn(self):
         horn_url = f"{Bot.base_url}/turn.php"
-        res = self.sess.get(horn_url)
+        res = self._game_client._session.get(horn_url)
         if not res.ok:
             self.raise_res_error(res)
         self.logger.info("Horn")
 
     def get_page_soup(self) -> BeautifulSoup:
         home_url = Bot.base_url
-        res = self.sess.get(home_url)
+        res = self._game_client._session.get(home_url)
         if not res.ok:
             self.raise_res_error(res)
         return BeautifulSoup(res.text, "html.parser")
@@ -121,7 +112,7 @@ class Bot(object):
 
     def solve_captcha(self):
         captcha_url = self.get_captcha_url()
-        response = self.sess.get(captcha_url)
+        response = self._game_client._session.get(captcha_url)
         if not response.ok:
             self.raise_res_error(response)
 
@@ -133,7 +124,7 @@ class Bot(object):
         if len(answer) != 5:
             data = {"action": "request_new_code", "uh": self.unique_hash}
             self.logger.info("requesting new captcha")
-            self.sess.post(url, data)
+            self._game_client._session.post(url, data)
             return self.solve_captcha()
 
         data = {
@@ -141,7 +132,7 @@ class Bot(object):
             "code": answer,
             "uh": self.unique_hash,
         }
-        self.sess.post(url, data)
+        self._game_client._session.post(url, data)
 
     def get_captcha_url(self) -> str:
         epoch = datetime.utcfromtimestamp(0)

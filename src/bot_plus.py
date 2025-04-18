@@ -142,7 +142,7 @@ class BotPlus(Bot):
                 "action": "toggle_wild_tonic",
                 "uh": self.unique_hash,
             }
-            self.sess.post(url, data)
+            self._game_client._session.post(url, data)
 
     def check_bwrift(self, user_data: dict):
         if self.get_location(user_data) != "Bristle Woods Rift":
@@ -160,7 +160,7 @@ class BotPlus(Bot):
                 "portal_type": "basic_chamber",
                 "uh": self.unique_hash,
             }
-            self.sess.post(url, data=data)
+            self._game_client._session.post(url, data=data)
             return
 
         quest_data = user_data["quests"]["QuestRiftBristleWoods"]
@@ -185,7 +185,7 @@ class BotPlus(Bot):
                 "action": "toggle_fuel",
                 "uh": self.unique_hash,
             }
-            self.sess.post(url, data=data)
+            self._game_client._session.post(url, data=data)
 
         if floor % 8 == 0:
             message = f"At floor {floor}"
@@ -227,7 +227,7 @@ class BotPlus(Bot):
                 "action": "claim_reward",
                 "uh": self.unique_hash,
             }
-            self.sess.post(url, data=data)
+            self._game_client._session.post(url, data=data)
 
     def check_town_of_gnawnia(self, user_data: dict):
         if self.get_location(user_data) != "Town of Gnawnia":
@@ -245,7 +245,7 @@ class BotPlus(Bot):
                 "action": "claim_reward",
                 "uh": self.unique_hash,
             }
-            self.sess.post(url, data=data)
+            self._game_client._session.post(url, data=data)
 
         is_bounty_acceptable = (
             soup.find("a", "townOfGnawniaHUD-actionButton reveal active") is not None
@@ -255,7 +255,7 @@ class BotPlus(Bot):
                 "action": "accept_bounty",
                 "uh": self.unique_hash,
             }
-            self.sess.post(url, data=data)
+            self._game_client._session.post(url, data=data)
 
     def check_warpath(self, user_data: dict):
         if self.get_location(user_data) != "Fiery Warpath":
@@ -415,7 +415,7 @@ class BotPlus(Bot):
                 "uh": self.unique_hash,
                 "action": "claim_reward",
             }
-            self.sess.post(url, data=data)
+            self._game_client._session.post(url, data=data)
 
         class FactoryRooms(Enum):
             MIXING_ROOM = "mixing_room"
@@ -442,7 +442,7 @@ class BotPlus(Bot):
                 "action": "pick_room",
                 "room": room.value,
             }
-            self.sess.post(url, data=data)
+            self._game_client._session.post(url, data=data)
 
         is_upgrade_complete = all(
             quest["factory_atts"]["level"][room.value] == 5 for room in FactoryRooms
@@ -474,7 +474,7 @@ class BotPlus(Bot):
                         "action": "upgrade_room",
                         "room": room.value,
                     }
-                    self.sess.post(url, data=data)
+                    self._game_client._session.post(url, data=data)
                     break
                 elif room_info["level"] < 5:
                     # Check what resources we need
@@ -526,7 +526,7 @@ class BotPlus(Bot):
                 "slot": idx,
                 "recipe_type": chosen_recipe,
             }
-            self.sess.post(url, data=data)
+            self._game_client._session.post(url, data=data)
 
     def check_winter_hunt(self, user_data: dict):
         location = self.get_location(user_data)
@@ -564,7 +564,7 @@ class BotPlus(Bot):
                     "action": "claim",
                     "gift": gift["gift"],
                 }
-                self.sess.post(url, data=data)
+                self._game_client._session.post(url, data=data)
 
     def check_school_of_sorcery(self, user_data: dict):
         if self.get_location(user_data) != "School of Sorcery":
@@ -614,7 +614,7 @@ class BotPlus(Bot):
 
         url = f"{Bot.base_url}/managers/ajax/users/changetrap.php"
         data = {"uh": self.unique_hash, classification.value: item_key}
-        self.sess.post(url, data=data)
+        self._game_client._session.post(url, data=data)
 
     def purchase_item(self, item_key: str, quantity: int):
         url = f"{self.base_url}/managers/ajax/purchases/itempurchase.php"
@@ -625,7 +625,7 @@ class BotPlus(Bot):
             "buy": 1,
             "is_kings_cart_item": 0,
         }
-        self.sess.post(url, data=data)
+        self._game_client._session.post(url, data=data)
 
     def arm_or_purchase_trinket(self, trinket_key: str):
         if trinket_key not in self.get_trap_components(TrapClassifications.TRINKET):
@@ -639,7 +639,7 @@ class BotPlus(Bot):
             **crafting_items,
             "craftQty": quantity,
         }
-        response = self.sess.post(url, data=data)
+        response = self._game_client._session.post(url, data=data)
         if not response.ok:
             return False
         try:
@@ -652,7 +652,7 @@ class BotPlus(Bot):
     def get_trap_components(self, classification: TrapClassifications) -> set:
         url = f"{Bot.base_url}/managers/ajax/users/gettrapcomponents.php"
         data = {"uh": self.unique_hash, "classification": classification.value}
-        res = self.sess.post(url, data=data)
+        res = self._game_client._session.post(url, data=data)
 
         components = json.loads(res.text)["components"]
         return {component["type"] for component in components}
