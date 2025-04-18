@@ -428,7 +428,9 @@ class BotPlus(Bot):
 
             @classmethod
             def from_item(cls, item: str) -> "FactoryRooms":
-                room_type = item.replace("birthday_factory_", "").replace("_stat_item", "")
+                room_type = item.replace("birthday_factory_", "").replace(
+                    "_stat_item", ""
+                )
                 return cls(room_type)
 
         def _change_room(room: FactoryRooms):
@@ -447,9 +449,7 @@ class BotPlus(Bot):
         )
         if is_upgrade_complete:
             item_qty = {
-                room: int(
-                    quest["items"][room.to_item()]["quantity"]
-                )
+                room: int(quest["items"][room.to_item()]["quantity"])
                 for room in FactoryRooms
             }
             if max(item_qty.values()) - min(item_qty.values()) >= 10:
@@ -488,7 +488,9 @@ class BotPlus(Bot):
 
                     if needed_items:
                         # Only change room if we're not already in a room that produces something we need
-                        current_room = FactoryRooms(quest["factory_atts"]["current_room"])
+                        current_room = FactoryRooms(
+                            quest["factory_atts"]["current_room"]
+                        )
                         if current_room.to_item() not in needed_items:
                             # Find the item we need most and go to its room
                             most_needed = max(needed_items.items(), key=lambda x: x[1])
