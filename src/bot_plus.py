@@ -58,7 +58,6 @@ class BotPlus(Bot):
         user_data = self.get_user_data()
         self.check_bait_empty(user_data)
         self.check_location_setup(user_data)
-        self.check_queso_river(user_data)
         self.check_bwrift(user_data)
         self.check_vrift(user_data)
         self.check_mountain(user_data)
@@ -127,22 +126,6 @@ class BotPlus(Bot):
         if any([incorrect_queso, incorrect_frift]):
             message = f"Unexpected setup in {location}"
             self._send_telegram_message(f"{self.name}\n{message}")
-
-    def check_queso_river(self, user_data: dict):
-        if self.get_location(user_data) != "Queso River":
-            return
-
-        soup = self.get_environment_hud(user_data)
-        is_tonic_active = (
-            soup.find("a", class_="quesoHUD-wildTonic-button selected") is not None
-        )
-        if is_tonic_active:
-            url = "https://www.mousehuntgame.com/managers/ajax/environment/queso_canyon.php"
-            data = {
-                "action": "toggle_wild_tonic",
-                "uh": self.unique_hash,
-            }
-            self._game_client._session.post(url, data)
 
     def check_bwrift(self, user_data: dict):
         if self.get_location(user_data) != "Bristle Woods Rift":
@@ -225,34 +208,6 @@ class BotPlus(Bot):
             url = "https://www.mousehuntgame.com/managers/ajax/environment/mountain.php"
             data = {
                 "action": "claim_reward",
-                "uh": self.unique_hash,
-            }
-            self._game_client._session.post(url, data=data)
-
-    def check_town_of_gnawnia(self, user_data: dict):
-        if self.get_location(user_data) != "Town of Gnawnia":
-            return
-
-        soup = self.get_environment_hud(user_data)
-        url = "https://www.mousehuntgame.com/managers/ajax/users/town_of_gnawnia.php"
-
-        is_reward_claimable = (
-            soup.find("a", class_="townOfGnawniaHUD-actionButton claim active")
-            is not None
-        )
-        if is_reward_claimable:
-            data = {
-                "action": "claim_reward",
-                "uh": self.unique_hash,
-            }
-            self._game_client._session.post(url, data=data)
-
-        is_bounty_acceptable = (
-            soup.find("a", "townOfGnawniaHUD-actionButton reveal active") is not None
-        )
-        if is_bounty_acceptable:
-            data = {
-                "action": "accept_bounty",
                 "uh": self.unique_hash,
             }
             self._game_client._session.post(url, data=data)
