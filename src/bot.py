@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from io import BytesIO
 
 from PIL import Image
@@ -94,33 +93,14 @@ class Bot(object):
         self.check_and_solve_captcha()  # if wrong answer, image will change, solve again
 
     def solve_captcha(self):
-        captcha_url = self.get_captcha_url()
-        response = self._game_client._session.get(captcha_url)
-        if not response.ok:
-            self.raise_res_error(response)
-
-        image = Image.open(BytesIO(response.content))
+        image = Image.open(BytesIO(self._game_client.get_captcha_image_content()))
         answer = self._captcha_client.solve_captcha(image)
-        self.logger.info(f"captcha attempt: {captcha_url=} {answer=}")
 
-        url = f"{Bot.base_url}/managers/ajax/users/puzzle.php"
         if len(answer) != 5:
-            data = {"action": "request_new_code", "uh": self.unique_hash}
-            self.logger.info("requesting new captcha")
-            self._game_client._session.post(url, data)
-            return self.solve_captcha()
-
-        data = {
-            "action": "solve",
-            "code": answer,
-            "uh": self.unique_hash,
-        }
-        self._game_client._session.post(url, data)
-
-    def get_captcha_url(self) -> str:
-        epoch = datetime.utcfromtimestamp(0)
-        milliseconds_since_epoch = int((datetime.now() - epoch).total_seconds() * 1000)
-        return f"{self.base_url}/images/puzzleimage.php?t={milliseconds_since_epoch}&user_id={self.user_id}"
+            self._game_client.request_new_captcha()
+            self.solve_captcha()
+        else:
+            self._game_client.solve_captcha(answer)
 
     def raise_res_error(self, res: Response):
         raise Exception(res.text)

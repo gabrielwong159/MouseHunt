@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import cloudscraper  # type: ignore
 from requests import Session
 
@@ -9,8 +11,10 @@ from src.settings import Settings
 class GameClient:
     _BASE_URL = "https://www.mousehuntgame.com"
     _LOGIN_URL = f"{_BASE_URL}/managers/ajax/users/session.php"
+    _CAPTCHA_URL = f"{_BASE_URL}/managers/ajax/users/puzzle.php"
     _PAGE_URL = f"{_BASE_URL}/managers/ajax/pages/page.php"
     _HORN_URL = f"{_BASE_URL}/turn.php"
+    _CAPTCHA_IMAGE_URL = f"{_BASE_URL}/images/puzzleimage.php"
 
     def __init__(self, settings: Settings, captcha_client: CaptchaClient):
         self._captcha_client = captcha_client
@@ -35,6 +39,34 @@ class GameClient:
     def horn(self) -> None:
         response = self._session.get(self._HORN_URL)
         response.raise_for_status()
+
+    def request_new_captcha(self) -> None:
+        response = self._session.post(
+            self._CAPTCHA_URL,
+            data={"action": "request_new_code", "uh": self._unique_hash},
+        )
+        response.raise_for_status()
+
+    def solve_captcha(self, answer: str) -> None:
+        response = self._session.post(
+            self._CAPTCHA_URL,
+            data={"action": "solve", "code": answer, "uh": self._unique_hash},
+        )
+        response.raise_for_status()
+
+    def get_captcha_image_content(self) -> bytes:
+        epoch = datetime.utcfromtimestamp(0)
+        milliseconds_since_epoch = int((datetime.now() - epoch).total_seconds() * 1000)
+        user_id = self._user_data.user_id
+        response = self._session.get(
+            self._CAPTCHA_IMAGE_URL,
+            params={
+                "t": milliseconds_since_epoch,
+                "user_id": user_id,
+            },
+        )
+        response.raise_for_status()
+        return response.content
 
     def _login(self, username: str, password: str) -> tuple[Session, UserData]:
         session = cloudscraper.create_scraper()
