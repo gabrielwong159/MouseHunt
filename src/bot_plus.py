@@ -233,7 +233,7 @@ class BotPlus(Bot):
             if len(remaining_types) == 0:
                 return
             if len(remaining_types) == 1:
-                self.change_trap(TrapClassifications.TRINKET, "disarm")
+                self._game_client.disarm_trinket()
                 return
             target_type = min(remaining_types, key=lambda _: _[1])[0]
             if (
@@ -259,7 +259,7 @@ class BotPlus(Bot):
                 curse["charm"]["equipped"] for curse in minigame["curses"]
             )
             if is_equipping_minigame_charm:
-                self.change_trap(TrapClassifications.TRINKET, "disarm")
+                self._game_client.disarm_trinket()
             return
 
         for curse in minigame["curses"]:
@@ -315,10 +315,11 @@ class BotPlus(Bot):
         # try to equip super salt charm
         if is_trinket_armed and armed_trinket == "Super Salt Charm":
             return
-        self.change_trap(TrapClassifications.TRINKET, "disarm")
+        self._game_client.disarm_trinket()
         trinket_key = "super_salt_trinket"
-        if trinket_key not in self._game_client.get_trap_components(
-            TrapClassifications.TRINKET.value
+        if not self._game_client.has_trap_component(
+            classification_type=TrapClassifications.TRINKET.value,
+            item_key=trinket_key,
         ):
             is_crafting_successful = self._game_client.try_craft_item(
                 crafting_items={
@@ -483,10 +484,7 @@ class BotPlus(Bot):
             current_bait = user_data["bait_name"]
             if current_bait == "Gouda Cheese":
                 target_bait = "apprentice_ambert_cheese"
-                if target_bait in self._game_client.get_trap_components(
-                    TrapClassifications.BAIT.value
-                ):
-                    self.change_trap(TrapClassifications.BAIT, target_bait)
+                self.change_trap(TrapClassifications.BAIT, target_bait)
 
         quest = user_data["quests"]["QuestSchoolOfSorcery"]
         expected_power_type = quest["current_course"]["power_type"]
@@ -514,21 +512,14 @@ class BotPlus(Bot):
                 "Draconic Depths: all crucibles at max progress"
             )
 
+    # TODO: we keep this function for now to convert between enum and str
     def change_trap(self, classification: TrapClassifications, item_key: str):
-        if item_key not in "disarm":
-            available_components = self._game_client.get_trap_components(
-                classification.value
-            )
-            if item_key not in available_components:
-                self._send_telegram_message(
-                    f"{self.name}\ncannot find {classification}: {item_key}"
-                )
-                return
         self._game_client.change_trap(classification.value, item_key)
 
     def arm_or_purchase_trinket(self, trinket_key: str):
-        if trinket_key not in self._game_client.get_trap_components(
-            TrapClassifications.TRINKET.value
+        if not self._game_client.has_trap_component(
+            classification_type=TrapClassifications.TRINKET.value,
+            item_key=trinket_key,
         ):
             self._game_client.purchase_item(trinket_key, 1)
         self.change_trap(TrapClassifications.TRINKET, trinket_key)

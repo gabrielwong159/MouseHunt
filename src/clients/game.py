@@ -51,20 +51,20 @@ class GameClient:
         response = self._session.get(self._HORN_URL)
         response.raise_for_status()
 
-    def get_trap_components(self, classification_type: str) -> set[str]:
-        response = self._session.post(
-            self._GET_TRAP_COMPONENTS_URL,
-            data={"classification": classification_type, "uh": self._unique_hash},
-        )
-        components = response.json()["components"]
-        return {component["type"] for component in components}
+    def has_trap_component(self, classification_type: str, item_key: str) -> bool:
+        return item_key in self._get_trap_components(classification_type)
 
     def change_trap(self, classification_type: str, item_key: str) -> None:
+        if not self.has_trap_component(classification_type, item_key):
+            return
         response = self._session.post(
             self._CHANGE_TRAP_URL,
             data={classification_type: item_key, "uh": self._unique_hash},
         )
         response.raise_for_status()
+
+    def disarm_trinket(self) -> None:
+        self.change_trap("trinket", "disarm")
 
     def purchase_item(self, item_key: str, quantity: int) -> None:
         response = self._session.post(
@@ -205,6 +205,14 @@ class GameClient:
         # it for all subsequent calls, including refreshing the user_data
         data = response.json()["user"]
         return session, UserData.model_validate(data)
+
+    def _get_trap_components(self, classification_type: str) -> set[str]:
+        response = self._session.post(
+            self._GET_TRAP_COMPONENTS_URL,
+            data={"classification": classification_type, "uh": self._unique_hash},
+        )
+        components = response.json()["components"]
+        return {component["type"] for component in components}
 
     @property
     def _unique_hash(self) -> str:
