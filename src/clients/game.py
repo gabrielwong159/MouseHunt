@@ -10,6 +10,7 @@ class GameClient:
     _BASE_URL = "https://www.mousehuntgame.com"
     _LOGIN_URL = f"{_BASE_URL}/managers/ajax/users/session.php"
     _PAGE_URL = f"{_BASE_URL}/managers/ajax/pages/page.php"
+    _HORN_URL = f"{_BASE_URL}/turn.php"
 
     def __init__(self, settings: Settings, captcha_client: CaptchaClient):
         self._captcha_client = captcha_client
@@ -30,6 +31,10 @@ class GameClient:
         response.raise_for_status()
         data = response.json()["user"]
         self._user_data = UserData.model_validate(data)
+
+    def horn(self) -> None:
+        response = self._session.get(self._HORN_URL)
+        response.raise_for_status()
 
     def _login(self, username: str, password: str) -> tuple[Session, UserData]:
         session = cloudscraper.create_scraper()

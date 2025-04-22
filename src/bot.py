@@ -43,11 +43,7 @@ class Bot(object):
         return self._game_client._user_data.model_dump()
 
     def horn(self):
-        horn_url = f"{Bot.base_url}/turn.php"
-        res = self._game_client._session.get(horn_url)
-        if not res.ok:
-            self.raise_res_error(res)
-        self.logger.info("Horn")
+        self._game_client.horn()
 
     def get_page_soup(self) -> BeautifulSoup:
         home_url = Bot.base_url
