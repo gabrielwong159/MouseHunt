@@ -1,11 +1,9 @@
-import json
 import os
 from enum import Enum
 from typing import Optional, cast
 
 from bs4 import BeautifulSoup, Tag
 from requests import Response
-from requests.exceptions import JSONDecodeError
 
 from src.bot import Bot
 from src.clients.telegram_bot import TelegramBotClient
@@ -137,14 +135,7 @@ class BotPlus(Bot):
             is not None
         )
         if is_bwrift_entrance:
-            url = "https://www.mousehuntgame.com/managers/ajax/environment/rift_bristle_woods.php"
-            data = {
-                "action": "enter_portal",
-                "portal_type": "basic_chamber",
-                "uh": self.unique_hash,
-            }
-            self._game_client._session.post(url, data=data)
-            return
+            return self._game_client.enter_bwrift()
 
         quest_data = user_data["quests"]["QuestRiftBristleWoods"]
         if quest_data["chamber_status"] != "open":
@@ -162,14 +153,6 @@ class BotPlus(Bot):
             "quantity"
         ]
 
-        def toggle_fire():
-            url = "https://www.mousehuntgame.com/managers/ajax/environment/rift_valour.php"
-            data = {
-                "action": "toggle_fuel",
-                "uh": self.unique_hash,
-            }
-            self._game_client._session.post(url, data=data)
-
         if floor % 8 == 0:
             message = f"At floor {floor}"
             self._send_telegram_message(f"{self.name}\n{message}")
@@ -180,7 +163,7 @@ class BotPlus(Bot):
         message = ""
         if floor % 8 != 0:
             if is_fire_active:
-                toggle_fire()
+                self._game_client.toggle_vrift_fire()
                 message = f"At floor {floor}, switching off fire"
         else:
             if is_fire_active:
@@ -188,7 +171,7 @@ class BotPlus(Bot):
             elif n_fire == 0:
                 message = f"At floor {floor}, no fire to activate"
             else:
-                toggle_fire()
+                self._game_client.toggle_vrift_fire()
                 message = f"At floor {floor}, {n_fire} fire available, activating fire"
 
         if message is not None:
@@ -205,12 +188,7 @@ class BotPlus(Bot):
             is not None
         )
         if is_boulder_claimable:
-            url = "https://www.mousehuntgame.com/managers/ajax/environment/mountain.php"
-            data = {
-                "action": "claim_reward",
-                "uh": self.unique_hash,
-            }
-            self._game_client._session.post(url, data=data)
+            self._game_client.claim_mountain_boulder()
 
     def check_warpath(self, user_data: dict):
         if self.get_location(user_data) != "Fiery Warpath":
@@ -339,8 +317,10 @@ class BotPlus(Bot):
             return
         self.change_trap(TrapClassifications.TRINKET, "disarm")
         trinket_key = "super_salt_trinket"
-        if trinket_key not in self.get_trap_components(TrapClassifications.TRINKET):
-            is_crafting_successful = self.craft_item(
+        if trinket_key not in self._game_client.get_trap_components(
+            TrapClassifications.TRINKET.value
+        ):
+            is_crafting_successful = self._game_client.try_craft_item(
                 crafting_items={
                     "parts[extra_coarse_salt_crafting_item]": 1,
                     "parts[essence_b_crafting_item]": 2,
@@ -361,16 +341,11 @@ class BotPlus(Bot):
         if self.get_location(user_data) != "SUPER|brie+ Factory":
             return
 
-        url = "https://www.mousehuntgame.com/managers/ajax/events/birthday_factory.php"
         quest = user_data["quests"]["QuestSuperBrieFactory"]
 
         is_crate_claimable = quest["factory_atts"]["can_claim"]
         if is_crate_claimable:
-            data = {
-                "uh": self.unique_hash,
-                "action": "claim_reward",
-            }
-            self._game_client._session.post(url, data=data)
+            self._game_client.claim_sb_factory_crate()
 
         class FactoryRooms(Enum):
             MIXING_ROOM = "mixing_room"
@@ -392,12 +367,7 @@ class BotPlus(Bot):
             current_room = quest["factory_atts"]["current_room"]
             if current_room == room.value:
                 return
-            data = {
-                "uh": self.unique_hash,
-                "action": "pick_room",
-                "room": room.value,
-            }
-            self._game_client._session.post(url, data=data)
+            self._game_client.change_sb_factory_room(room.value)
 
         is_upgrade_complete = all(
             quest["factory_atts"]["level"][room.value] == 5 for room in FactoryRooms
@@ -424,12 +394,7 @@ class BotPlus(Bot):
             for room in priority_order:
                 room_info = room_data[room.value]
                 if room_info["can_upgrade"]:
-                    data = {
-                        "uh": self.unique_hash,
-                        "action": "upgrade_room",
-                        "room": room.value,
-                    }
-                    self._game_client._session.post(url, data=data)
+                    self._game_client.upgrade_sb_factory_room(room.value)
                     break
                 elif room_info["level"] < 5:
                     # Check what resources we need
@@ -473,15 +438,10 @@ class BotPlus(Bot):
                     break
             if chosen_recipe is None:
                 return  # insufficient ingredients to brew - abort altogether
-
-            url = "https://www.mousehuntgame.com/managers/ajax/events/halloween_boiling_cauldron.php"
-            data = {
-                "uh": self.unique_hash,
-                "action": "brew_recipe",
-                "slot": idx,
-                "recipe_type": chosen_recipe,
-            }
-            self._game_client._session.post(url, data=data)
+            self._game_client.brew_halloween_recipe(
+                recipe_type=chosen_recipe,
+                slot=idx,
+            )
 
     def check_winter_hunt(self, user_data: dict):
         location = self.get_location(user_data)
@@ -513,13 +473,7 @@ class BotPlus(Bot):
             return
         for gift in quest_data["gifts"]:
             if gift["can_claim"]:
-                url = "https://www.mousehuntgame.com/managers/ajax/events/advent_calendar.php"
-                data = {
-                    "uh": self.unique_hash,
-                    "action": "claim",
-                    "gift": gift["gift"],
-                }
-                self._game_client._session.post(url, data=data)
+                self._game_client.claim_advent_calendar_gift(gift["gift"])
 
     def check_school_of_sorcery(self, user_data: dict):
         if self.get_location(user_data) != "School of Sorcery":
@@ -529,7 +483,9 @@ class BotPlus(Bot):
             current_bait = user_data["bait_name"]
             if current_bait == "Gouda Cheese":
                 target_bait = "apprentice_ambert_cheese"
-                if target_bait in self.get_trap_components(TrapClassifications.BAIT):
+                if target_bait in self._game_client.get_trap_components(
+                    TrapClassifications.BAIT.value
+                ):
                     self.change_trap(TrapClassifications.BAIT, target_bait)
 
         quest = user_data["quests"]["QuestSchoolOfSorcery"]
@@ -560,57 +516,22 @@ class BotPlus(Bot):
 
     def change_trap(self, classification: TrapClassifications, item_key: str):
         if item_key not in "disarm":
-            available_components = self.get_trap_components(classification)
+            available_components = self._game_client.get_trap_components(
+                classification.value
+            )
             if item_key not in available_components:
                 self._send_telegram_message(
                     f"{self.name}\ncannot find {classification}: {item_key}"
                 )
                 return
-
-        url = f"{Bot.base_url}/managers/ajax/users/changetrap.php"
-        data = {"uh": self.unique_hash, classification.value: item_key}
-        self._game_client._session.post(url, data=data)
-
-    def purchase_item(self, item_key: str, quantity: int):
-        url = f"{self.base_url}/managers/ajax/purchases/itempurchase.php"
-        data = {
-            "uh": self.unique_hash,
-            "type": item_key,
-            "quantity": quantity,
-            "buy": 1,
-            "is_kings_cart_item": 0,
-        }
-        self._game_client._session.post(url, data=data)
+        self._game_client.change_trap(classification.value, item_key)
 
     def arm_or_purchase_trinket(self, trinket_key: str):
-        if trinket_key not in self.get_trap_components(TrapClassifications.TRINKET):
-            self.purchase_item(trinket_key, 1)
+        if trinket_key not in self._game_client.get_trap_components(
+            TrapClassifications.TRINKET.value
+        ):
+            self._game_client.purchase_item(trinket_key, 1)
         self.change_trap(TrapClassifications.TRINKET, trinket_key)
-
-    def craft_item(self, crafting_items: dict, quantity: int) -> bool:
-        url = f"{self.base_url}/managers/ajax/users/crafting.php"
-        data = {
-            "uh": self.unique_hash,
-            **crafting_items,
-            "craftQty": quantity,
-        }
-        response = self._game_client._session.post(url, data=data)
-        if not response.ok:
-            return False
-        try:
-            return response.json()["success"] == 1
-        except JSONDecodeError:
-            return False
-        except KeyError:
-            return False
-
-    def get_trap_components(self, classification: TrapClassifications) -> set:
-        url = f"{Bot.base_url}/managers/ajax/users/gettrapcomponents.php"
-        data = {"uh": self.unique_hash, "classification": classification.value}
-        res = self._game_client._session.post(url, data=data)
-
-        components = json.loads(res.text)["components"]
-        return {component["type"] for component in components}
 
     def get_location(self, user_data: dict) -> str:
         return user_data["environment_name"]
