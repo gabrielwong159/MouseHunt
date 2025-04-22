@@ -68,6 +68,9 @@ class GameClient:
         response.raise_for_status()
         return response.content
 
+    def has_captcha(self) -> bool:
+        return self._user_data.has_puzzle
+
     def _login(self, username: str, password: str) -> tuple[Session, UserData]:
         session = cloudscraper.create_scraper()
         response = session.post(

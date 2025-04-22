@@ -18,6 +18,8 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 class Bot(object):
+    _MAX_CAPTCHA_ATTEMPTS = 5
+
     base_url = "https://www.mousehuntgame.com"
 
     def __init__(self, settings: Settings):
@@ -84,21 +86,20 @@ class Bot(object):
         return entries
 
     def check_and_solve_captcha(self):
-        user_data = self.get_user_data()
-        has_captcha = user_data["has_puzzle"]
-        if not has_captcha:
-            return
+        for _ in range(self._MAX_CAPTCHA_ATTEMPTS):
+            self._game_client.refresh_user_data()
+            if self._game_client.has_captcha():
+                self._solve_captcha()
+            else:
+                break
+        else:
+            raise Exception("Exceeded number of captcha attempts")
 
-        self.solve_captcha()
-        self.check_and_solve_captcha()  # if wrong answer, image will change, solve again
-
-    def solve_captcha(self):
+    def _solve_captcha(self):
         image = Image.open(BytesIO(self._game_client.get_captcha_image_content()))
         answer = self._captcha_client.solve_captcha(image)
-
         if len(answer) != 5:
             self._game_client.request_new_captcha()
-            self.solve_captcha()
         else:
             self._game_client.solve_captcha(answer)
 
