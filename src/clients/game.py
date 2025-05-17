@@ -62,6 +62,8 @@ class GameClient:
             data={classification_type: item_key, "uh": self._unique_hash},
         )
         response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
 
     def disarm_trinket(self) -> None:
         self.change_trap("trinket", "disarm")
@@ -78,6 +80,8 @@ class GameClient:
             },
         )
         response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
 
     def try_craft_item(self, crafting_items: dict, quantity: int) -> bool:
         response = self._session.post(
@@ -87,6 +91,8 @@ class GameClient:
         if not response.ok:
             return False
         try:
+            data = response.json()["user"]
+            self._user_data = UserData.model_validate(data)
             return response.json()["success"] == 1
         except JSONDecodeError:
             return False
