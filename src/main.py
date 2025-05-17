@@ -1,6 +1,5 @@
+import asyncio
 import random
-import sched
-import time
 from datetime import datetime, timedelta
 
 from src.bot_plus import BotPlus as Bot
@@ -12,7 +11,7 @@ TRAP_CHECK_PRIORITY = 1
 HORN_PRIORITY = 2
 
 
-def main():
+async def main():
     settings = Settings()
     if settings.telegram_bot_token != "" and settings.telegram_chat_id != "":
         telegram_bot_client = TelegramBotClient(
@@ -23,49 +22,31 @@ def main():
         telegram_bot_client = None
     bot = Bot(settings, telegram_bot_client)
 
-    while True:
-        day = datetime.now().day
-        s = sched.scheduler(time.time, time.sleep)
-        s.enter(
-            delay=0,
-            priority=TRAP_CHECK_PRIORITY,
-            action=trap_check_loop,
-            argument=(bot, s, day),
-        )
-        s.enter(
-            delay=0, priority=HORN_PRIORITY, action=horn_loop, argument=(bot, s, day)
-        )
-        s.run()
-
-
-def horn_loop(bot: Bot, s: sched.scheduler, curr_day: int):
-    secs_to_next_hunt = bot.get_user_data()["next_activeturn_seconds"]
-    if secs_to_next_hunt > 0:
-        arbitrary_delay = 5
-        total_delay = secs_to_next_hunt + arbitrary_delay
-    else:
-        bot.check_and_solve_captcha()
-        bot.horn()
-        total_delay = 15 * 60 + random.randint(1, MAX_DELAY)
-
-    bot.update_journal_entries()
-
-    if datetime.now().day != curr_day:
-        return
-
-    next_hunt_dt = datetime.now() + timedelta(seconds=total_delay)
-    bot.logger.info(f'time of next hunt: {next_hunt_dt.strftime("%Y-%m-%d %T")}')
-
-    s.enter(
-        delay=total_delay,
-        priority=HORN_PRIORITY,
-        action=horn_loop,
-        argument=(bot, s, curr_day),
+    await asyncio.gather(
+        asyncio.create_task(horn_loop(bot)),
+        asyncio.create_task(trap_check_loop(bot)),
     )
-    s.run()
 
 
-def trap_check_loop(bot: Bot, s: sched.scheduler, curr_day: int):
+async def horn_loop(bot: Bot):
+    while True:
+        secs_to_next_hunt = bot.get_user_data()["next_activeturn_seconds"]
+        if secs_to_next_hunt > 0:
+            arbitrary_delay = 5
+            total_delay = secs_to_next_hunt + arbitrary_delay
+        else:
+            bot.check_and_solve_captcha()
+            bot.horn()
+            total_delay = 15 * 60 + random.randint(1, MAX_DELAY)
+
+        bot.update_journal_entries()
+
+        next_hunt_dt = datetime.now() + timedelta(seconds=total_delay)
+        bot.logger.info(f'time of next hunt: {next_hunt_dt.strftime("%Y-%m-%d %T")}')
+        await asyncio.sleep(total_delay)
+
+
+async def trap_check_loop(bot: Bot):
     # TODO: refresh the data for legacy reasons, remove this when we're sure we
     #  don't need it
     bot.get_user_data()
@@ -73,9 +54,6 @@ def trap_check_loop(bot: Bot, s: sched.scheduler, curr_day: int):
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:
         bot.update_journal_entries()
-
-    if datetime.now().day != curr_day:
-        return
 
     if curr_min >= bot.trap_check:
         next_check_hour = datetime.now() + timedelta(hours=1)
@@ -88,19 +66,9 @@ def trap_check_loop(bot: Bot, s: sched.scheduler, curr_day: int):
     )
     bot.logger.info(f'time of next trap check: {next_check_dt.strftime("%Y-%m-%d %T")}')
 
-    next_day = datetime.now().replace(
-        hour=0, minute=0, second=0, microsecond=0
-    ) + timedelta(days=1)
-    secs_to_next_day = (next_day - datetime.now()).total_seconds()
     secs_to_next_check = (next_check_dt - datetime.now()).total_seconds()
-    s.enter(
-        delay=min(secs_to_next_check, secs_to_next_day),
-        priority=TRAP_CHECK_PRIORITY,
-        action=trap_check_loop,
-        argument=(bot, s, curr_day),
-    )
-    s.run()
+    await asyncio.sleep(secs_to_next_check)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
