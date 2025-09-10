@@ -30,6 +30,7 @@ async def main():
 
 async def horn_loop(bot: Bot):
     while True:
+        bot.refresh()
         secs_to_next_hunt = bot.get_user_data()["next_activeturn_seconds"]
         if secs_to_next_hunt > 0:
             arbitrary_delay = 5
@@ -47,9 +48,7 @@ async def horn_loop(bot: Bot):
 
 
 async def trap_check_loop(bot: Bot):
-    # TODO: refresh the data for legacy reasons, remove this when we're sure we
-    #  don't need it
-    bot.get_user_data()
+    bot.refresh()
 
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:

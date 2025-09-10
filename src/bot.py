@@ -39,6 +39,9 @@ class Bot(object):
         self.journal_entries: list[str] = []
         self.update_journal_entries()
 
+    def refresh(self) -> None:
+        self._game_client.refresh()
+
     def get_user_data(self) -> dict:
         self._game_client.refresh_user_data()
         return self._game_client._user_data.model_dump()

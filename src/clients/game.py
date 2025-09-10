@@ -29,9 +29,12 @@ class GameClient:
 
     def __init__(self, settings: Settings, captcha_client: CaptchaClient):
         self._captcha_client = captcha_client
-        self._session, self._user_data = self._login(
-            settings.mh_username, settings.mh_password
-        )
+        self._username = settings.mh_username
+        self._password = settings.mh_password
+        self._session, self._user_data = self._login(self._username, self._password)
+
+    def refresh(self) -> None:
+        self._session, self._user_data = self._login(self._username, self._password)
 
     def refresh_user_data(self) -> None:
         response = self._session.post(
