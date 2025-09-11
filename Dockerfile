@@ -1,7 +1,7 @@
 # docker build -t mh-bot .
 FROM python:3.9-slim AS requirements
 
-RUN python -m pip install --no-cache-dir --upgrade poetry
+RUN python -m pip install --no-cache-dir --upgrade poetry poetry-plugin-export
 
 COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --without-hashes -o /requirements.txt
