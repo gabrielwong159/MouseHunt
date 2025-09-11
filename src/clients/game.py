@@ -1,11 +1,12 @@
 from datetime import datetime
+from typing import Optional
 
 import cloudscraper  # type: ignore
 from requests import Session
 from requests.exceptions import JSONDecodeError
 
 from src.clients.captcha import CaptchaClient
-from src.models.game import UserData
+from src.models.game import AfterwordAcresData, UserData
 from src.settings import Settings
 
 
@@ -21,6 +22,7 @@ class GameClient:
     _BWRIFT_URL = f"{_BASE_URL}/managers/ajax/environment/rift_bristle_woods.php"
     _VRIFT_URL = f"{_BASE_URL}/managers/ajax/environment/rift_valour.php"
     _MOUNTAIN_URL = f"{_BASE_URL}/managers/ajax/environment/mountain.php"
+    _AFTERWORD_ACRES_URL = f"{_BASE_URL}/managers/ajax/environment/afterword_acres.php"
     _SB_FACTORY_URL = f"{_BASE_URL}/managers/ajax/events/birthday_factory.php"
     _HALLOWEEN_URL = f"{_BASE_URL}/managers/ajax/events/halloween_boiling_cauldron.php"
     _ADVENT_CALENDAR_URL = f"{_BASE_URL}/managers/ajax/events/advent_calendar.php"
@@ -198,6 +200,100 @@ class GameClient:
             data={"action": "claim", "gift": gift, "uh": self._unique_hash},
         )
         response.raise_for_status()
+
+    def get_afterword_acres_data(self) -> Optional[AfterwordAcresData]:
+        self.refresh_user_data()
+
+        if self._user_data.environment_name != "Afterword Acres":
+            return None
+
+        quest = self._user_data.quests["QuestAfterwordAcres"]
+        blight_level = quest["blight_level"]
+        productivity_rate = quest["productivity_rate"]
+        literary_log = quest["items"]["literary_lumber_stat_item"][
+            "quantity_unformatted"
+        ]
+        return AfterwordAcresData(
+            blight_level=blight_level,
+            productivity_rate=productivity_rate,
+            literary_log=literary_log,
+        )
+
+    def set_afterword_acres_droids(
+        self, harvesting: int, sawing: int, defending: int
+    ) -> None:
+        if harvesting + sawing + defending != 3:
+            raise ValueError(
+                f"Droid count must sum to 3, got {harvesting=} {sawing=} {defending=}"
+            )
+
+        self.refresh_user_data()
+        droids = self._user_data.quests["QuestAfterwordAcres"]["droids"]
+
+        def _get_droid_assigned(droid_type: str) -> int:
+            for d in droids:
+                if d["type"] == droid_type:
+                    return d["num_assigned"]
+            raise ValueError(f"No droid found for {droid_type=}")
+
+        curr_harvesting = _get_droid_assigned("harvesting")
+        curr_sawing = _get_droid_assigned("sawing")
+        curr_defending = _get_droid_assigned("defending")
+
+        def _increment(droid_type: str) -> None:
+            if droid_type not in ("sawing", "defending"):
+                raise ValueError(f"Invalid {droid_type=}")
+
+            response = self._session.post(
+                self._AFTERWORD_ACRES_URL,
+                data={
+                    "action": "increment_droid",
+                    "type": droid_type,
+                    "uh": self._unique_hash,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()["user"]
+            self._user_data = UserData.model_validate(data)
+
+        def _decrement(droid_type: str) -> None:
+            response = self._session.post(
+                self._AFTERWORD_ACRES_URL,
+                data={
+                    "action": "decrement_droid",
+                    "type": droid_type,
+                    "uh": self._unique_hash,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()["user"]
+            self._user_data = UserData.model_validate(data)
+
+        for _ in range(6):  # in the worst case, we need 6 ops
+            if curr_sawing > sawing:
+                _decrement("sawing")
+                continue
+
+            if curr_defending > defending:
+                _decrement("defending")
+                continue
+
+            if curr_sawing < sawing:
+                _increment("sawing")
+                continue
+
+            if curr_defending < defending:
+                _increment("defending")
+                continue
+
+            if (
+                harvesting == curr_harvesting
+                and sawing == curr_sawing
+                and defending == curr_defending
+            ):
+                return
+        else:
+            raise Exception("Failed to set afterword acres droids")
 
     def _login(self, username: str, password: str) -> tuple[Session, UserData]:
         session = cloudscraper.create_scraper()

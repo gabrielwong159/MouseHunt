@@ -1,4 +1,5 @@
 import os
+import warnings
 from enum import Enum
 from typing import Optional, cast
 
@@ -68,6 +69,7 @@ class BotPlus(Bot):
         self.check_advent_calendar(user_data)
         self.check_school_of_sorcery(user_data)
         self.check_draconic_depths(user_data)
+        self.check_afterword_acres(user_data)
 
         return all_entries, new_entries
 
@@ -492,6 +494,37 @@ class BotPlus(Bot):
             self._send_telegram_message(
                 "Draconic Depths: all crucibles at max progress"
             )
+
+    def check_afterword_acres(self, user_data: dict):
+        if self.get_location(user_data) != "Afterword Acres":
+            return
+
+        data = self._game_client.get_afterword_acres_data()
+        if data is None:
+            warnings.warn("Afterword Acres: cannot get data")
+            return
+
+        if data.blight_level >= 500:
+            self._game_client.set_afterword_acres_droids(
+                harvesting=0,
+                sawing=0,
+                defending=3,
+            )
+            return
+
+        if data.literary_log >= data.productivity_rate * 3:
+            self._game_client.set_afterword_acres_droids(
+                harvesting=0,
+                sawing=3,
+                defending=0,
+            )
+            return
+
+        self._game_client.set_afterword_acres_droids(
+            harvesting=3,
+            sawing=0,
+            defending=0,
+        )
 
     # TODO: we keep this function for now to convert between enum and str
     def change_trap(self, classification: TrapClassifications, item_key: str):

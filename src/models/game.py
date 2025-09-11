@@ -39,3 +39,9 @@ class UserData(BaseModel):
             if data["bait_name"] == 0:
                 data["bait_name"] = None
         return data
+
+
+class AfterwordAcresData(BaseModel):
+    blight_level: int
+    productivity_rate: int
+    literary_log: int
