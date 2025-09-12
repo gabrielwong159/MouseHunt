@@ -55,7 +55,6 @@ class BotPlus(Bot):
 
         user_data = self.get_user_data()
         self.check_bait_empty(user_data)
-        self.check_location_setup(user_data)
         self.check_bwrift(user_data)
         self.check_vrift(user_data)
         self.check_mountain(user_data)
@@ -106,24 +105,6 @@ class BotPlus(Bot):
             cheese = self.auto_bait
 
         self.change_trap(TrapClassifications.BAIT, cheese)
-
-    def check_location_setup(self, user_data: dict):
-        # iceberg, muridae, living garden
-        location = user_data["environment_name"]
-        base = user_data["base_name"]
-        bait = user_data["bait_name"]
-
-        incorrect_queso = (
-            location == "Queso River"
-            and base != "Overgrown Ember Stone Base"
-            and bait != "Wildfire Queso"
-        )
-        incorrect_frift = (
-            location == "Furoma Rift" and base != "Attuned Enerchi Induction Base"
-        )
-        if any([incorrect_queso, incorrect_frift]):
-            message = f"Unexpected setup in {location}"
-            self._send_telegram_message(f"{self.name}\n{message}")
 
     def check_bwrift(self, user_data: dict):
         if self.get_location(user_data) != "Bristle Woods Rift":
