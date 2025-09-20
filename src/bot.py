@@ -99,11 +99,10 @@ class Bot(object):
             raise Exception("Exceeded number of captcha attempts")
 
     def _solve_captcha(self):
+        self._game_client.request_new_captcha()
         image = Image.open(BytesIO(self._game_client.get_captcha_image_content()))
         answer = self._captcha_client.solve_captcha(image)
-        if len(answer) != 5:
-            self._game_client.request_new_captcha()
-        else:
+        if len(answer) == 5:
             self._game_client.solve_captcha(answer)
 
     def raise_res_error(self, res: Response):
