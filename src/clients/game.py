@@ -108,6 +108,8 @@ class GameClient:
             data={"action": "request_new_code", "uh": self._unique_hash},
         )
         response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
 
     def solve_captcha(self, answer: str) -> None:
         response = self._session.post(
@@ -115,6 +117,8 @@ class GameClient:
             data={"action": "solve", "code": answer, "uh": self._unique_hash},
         )
         response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
 
     def get_captcha_image_content(self) -> bytes:
         epoch = datetime.utcfromtimestamp(0)
