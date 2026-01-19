@@ -481,19 +481,23 @@ class BotPlus(Bot):
             self.change_trap(TrapClassifications.WEAPON, self.shadow_trap)
 
     def check_draconic_depths(self, user_data: dict):
-        if self.get_location(user_data) != "Draconic Depths":
+        data = self._game_client.get_draconic_depths_data()
+        if data is None:
             return
 
-        quest = user_data["quests"]["QuestDraconicDepths"]
-        if quest["in_cavern"]:
-            return
-
-        crucibles = quest["crucible_forge"]["crucibles"]
-        is_max_progress = all(c["is_max_progress"] for c in crucibles)
-        if is_max_progress:
-            self._send_telegram_message(
-                "Draconic Depths: all crucibles at max progress"
-            )
+        if data.in_cavern:
+            if (
+                user_data["bait_name"] != "Gouda Cheese"
+                and 1 <= data.hunts_remaining <= 5
+            ):
+                self._game_client.reinforce_cavern(
+                    data.max_hunts_remaining - data.hunts_remaining
+                )
+        else:
+            if data.is_crucibles_max:
+                self._send_telegram_message(
+                    "Draconic Depths: all crucibles at max progress"
+                )
 
     def check_afterword_acres(self, user_data: dict):
         if self.get_location(user_data) != "Afterword Acres":

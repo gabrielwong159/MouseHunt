@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -45,3 +45,11 @@ class AfterwordAcresData(BaseModel):
     blight_level: int
     productivity_rate: int
     literary_log: int
+
+
+class DraconicDepthsData(BaseModel):
+    in_cavern: bool
+    is_crucibles_max: bool
+    cavern_type: Literal["fire", "ice", "poison", "elemental", "none"]
+    hunts_remaining: int
+    max_hunts_remaining: int

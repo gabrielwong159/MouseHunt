@@ -6,7 +6,7 @@ from requests import Session
 from requests.exceptions import JSONDecodeError
 
 from src.clients.captcha import CaptchaClient
-from src.models.game import AfterwordAcresData, UserData
+from src.models.game import AfterwordAcresData, DraconicDepthsData, UserData
 from src.settings import Settings
 
 
@@ -23,6 +23,7 @@ class GameClient:
     _VRIFT_URL = f"{_BASE_URL}/managers/ajax/environment/rift_valour.php"
     _MOUNTAIN_URL = f"{_BASE_URL}/managers/ajax/environment/mountain.php"
     _AFTERWORD_ACRES_URL = f"{_BASE_URL}/managers/ajax/environment/afterword_acres.php"
+    _CAVERN_URL = f"{_BASE_URL}/managers/ajax/environment/draconic_depths.php"
     _SB_FACTORY_URL = f"{_BASE_URL}/managers/ajax/events/birthday_factory.php"
     _HALLOWEEN_URL = f"{_BASE_URL}/managers/ajax/events/halloween_boiling_cauldron.php"
     _ADVENT_CALENDAR_URL = f"{_BASE_URL}/managers/ajax/events/advent_calendar.php"
@@ -294,6 +295,42 @@ class GameClient:
                 return
         else:
             raise Exception("Failed to set afterword acres droids")
+
+    def get_draconic_depths_data(self) -> Optional[DraconicDepthsData]:
+        self.refresh_user_data()
+
+        if self._user_data.environment_name != "Draconic Depths":
+            return None
+
+        quest = self._user_data.quests["QuestDraconicDepths"]
+        crucibles = quest["crucible_forge"]["crucibles"]
+        is_crucibles_max = all(c["is_max_progress"] for c in crucibles)
+
+        return DraconicDepthsData(
+            in_cavern=quest["in_cavern"],
+            is_crucibles_max=is_crucibles_max,
+            cavern_type=quest["cavern"]["category"] if quest["in_cavern"] else "none",
+            hunts_remaining=quest["cavern"]["hunts_remaining"],
+            max_hunts_remaining=quest["cavern"]["max_hunts_remaining"],
+        )
+
+    def reinforce_cavern(self, amount: int) -> None:
+        self.refresh_user_data()
+
+        if self._user_data.environment_name != "Draconic Depths":
+            return
+
+        response = self._session.post(
+            self._CAVERN_URL,
+            data={
+                "action": "reinforce_cavern",
+                "reinforce_amount": amount,
+                "uh": self._unique_hash,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
 
     def _login(self, username: str, password: str) -> tuple[Session, UserData]:
         session = cloudscraper.create_scraper()
