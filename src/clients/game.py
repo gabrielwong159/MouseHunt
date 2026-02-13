@@ -310,8 +310,8 @@ class GameClient:
             in_cavern=quest["in_cavern"],
             is_crucibles_max=is_crucibles_max,
             cavern_type=quest["cavern"]["category"] if quest["in_cavern"] else "none",
-            hunts_remaining=quest["cavern"]["hunts_remaining"] if quest["in_cavern"] else 0,
-            max_hunts_remaining=quest["cavern"]["max_hunts_remaining"] if quest["in_cavern"] else 0,
+            hunts_remaining=quest["cavern"]["hunts_remaining"],
+            max_hunts_remaining=quest["cavern"]["max_hunts_remaining"],
         )
 
     def reinforce_cavern(self, amount: int) -> None:
