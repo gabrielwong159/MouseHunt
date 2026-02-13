@@ -485,6 +485,11 @@ class BotPlus(Bot):
         if data is None:
             return
 
+        if data.is_crucibles_max:
+            self._send_telegram_message(
+                "Draconic Depths: all crucibles at max progress"
+            )
+
         if data.in_cavern:
             if (
                 user_data["bait_name"] != "Gouda Cheese"
@@ -492,11 +497,6 @@ class BotPlus(Bot):
             ):
                 self._game_client.reinforce_cavern(
                     data.max_hunts_remaining - data.hunts_remaining
-                )
-        else:
-            if data.is_crucibles_max:
-                self._send_telegram_message(
-                    "Draconic Depths: all crucibles at max progress"
                 )
 
     def check_afterword_acres(self, user_data: dict):
