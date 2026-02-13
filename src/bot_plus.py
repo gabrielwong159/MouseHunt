@@ -42,6 +42,7 @@ class BotPlus(Bot):
         self.auto_apprentice_ambert = (
             os.environ.get("MH_AUTO_APPRENTICE_AMBERT", "false").lower() == "true"
         )
+        self._auto_reinforce_cavern = bool(os.environ.get("MH_AUTO_REINFORCE_CAVERN"))
         self.arcane_trap = os.environ["MH_ARCANE_TRAP"]
         self.shadow_trap = os.environ["MH_SHADOW_TRAP"]
 
@@ -487,7 +488,8 @@ class BotPlus(Bot):
 
         if data.in_cavern:
             if (
-                user_data["bait_name"] != "Gouda Cheese"
+                self._auto_reinforce_cavern
+                and user_data["bait_name"] != "Gouda Cheese"
                 and 1 <= data.hunts_remaining <= 5
             ):
                 self._game_client.reinforce_cavern(
