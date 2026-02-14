@@ -71,6 +71,7 @@ class BotPlus(Bot):
         self.check_school_of_sorcery(user_data)
         self.check_draconic_depths(user_data)
         self.check_afterword_acres(user_data)
+        self.check_conclusion_cliffs(user_data)
 
         return all_entries, new_entries
 
@@ -531,6 +532,16 @@ class BotPlus(Bot):
             sawing=0,
             defending=0,
         )
+
+    def check_conclusion_cliffs(self, user_data: dict):
+        if self.get_location(user_data) != "Conclusion Cliffs":
+            return
+
+        quest = user_data["quests"]["QuestConclusionCliffs"]
+        if quest["story"]["is_last_chapter"]:
+            return
+        if quest["story"]["next_chapter_choice"] != "short":
+            self._game_client.select_conclusion_cliffs_chapter("short")
 
     # TODO: we keep this function for now to convert between enum and str
     def change_trap(self, classification: TrapClassifications, item_key: str):

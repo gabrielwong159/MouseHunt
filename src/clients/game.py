@@ -23,6 +23,7 @@ class GameClient:
     _VRIFT_URL = f"{_BASE_URL}/managers/ajax/environment/rift_valour.php"
     _MOUNTAIN_URL = f"{_BASE_URL}/managers/ajax/environment/mountain.php"
     _AFTERWORD_ACRES_URL = f"{_BASE_URL}/managers/ajax/environment/afterword_acres.php"
+    _CONCLUSION_CLIFFS_URL = f"{_BASE_URL}/managers/ajax/environment/conclusion_cliffs.php"
     _CAVERN_URL = f"{_BASE_URL}/managers/ajax/environment/draconic_depths.php"
     _SB_FACTORY_URL = f"{_BASE_URL}/managers/ajax/events/birthday_factory.php"
     _HALLOWEEN_URL = f"{_BASE_URL}/managers/ajax/events/halloween_boiling_cauldron.php"
@@ -199,6 +200,19 @@ class GameClient:
         response = self._session.post(
             self._ADVENT_CALENDAR_URL,
             data={"action": "claim", "gift": gift, "uh": self._unique_hash},
+        )
+        response.raise_for_status()
+
+    def select_conclusion_cliffs_chapter(self, length_type: str) -> None:
+        if length_type not in ("short", "medium", "long"):
+            raise ValueError(f"Invalid {length_type=}")
+        response = self._session.post(
+            self._CONCLUSION_CLIFFS_URL,
+            data={
+                "action": "select_next_chapter",
+                "length_type": length_type,
+                "uh": self._unique_hash,
+            },
         )
         response.raise_for_status()
 
