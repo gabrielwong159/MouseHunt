@@ -540,7 +540,15 @@ class BotPlus(Bot):
         quest = user_data["quests"]["QuestConclusionCliffs"]
         if quest["story"]["is_last_chapter"]:
             return
-        if quest["story"]["next_chapter_choice"] != "short":
+
+        # "Near start" means 0-1 catches into the chapter
+        catches_remaining = quest["story"]["current_chapter"]["catches_remaining"]
+        max_catches = quest["story"]["current_chapter"]["max_catches"]
+        is_near_start_of_chapter = catches_remaining >= (max_catches - 1)
+        if (
+            is_near_start_of_chapter
+            and quest["story"]["next_chapter_choice"] != "short"
+        ):
             self._game_client.select_conclusion_cliffs_chapter("short")
 
     # TODO: we keep this function for now to convert between enum and str
