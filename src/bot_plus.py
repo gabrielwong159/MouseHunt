@@ -563,11 +563,31 @@ class BotPlus(Bot):
         catches_remaining = quest["story"]["current_chapter"]["catches_remaining"]
         max_catches = quest["story"]["current_chapter"]["max_catches"]
         is_near_start_of_chapter = catches_remaining >= (max_catches - 1)
-        if (
-            is_near_start_of_chapter
-            and quest["story"]["next_chapter_choice"] != "short"
-        ):
-            self._game_client.select_conclusion_cliffs_chapter("short")
+
+        chapter_choices = {
+            "short": quest["story"]["next_chapter_genre_short"],
+            "medium": quest["story"]["next_chapter_genre_medium"],
+            "long": quest["story"]["next_chapter_genre_long"],
+        }
+        has_fantasy = "fantasy" in chapter_choices.values()
+        next_chapter_genre = chapter_choices[quest["story"]["next_chapter_choice"]]
+
+        if is_near_start_of_chapter:
+            # Assume "fantasy" is user's choice - do not override.
+            # Incidentally, because the default choice is medium, this will
+            # allow medium fantasy choices by default.
+            if next_chapter_genre == "fantasy":
+                return
+
+            if has_fantasy:
+                self._send_telegram_message(
+                    "Conclusion Cliffs ",
+                    f"{hunts_remaining}/{hunts_total} hunts remaining ",
+                    "fantasy available",
+                )
+
+            if quest["story"]["next_chapter_choice"] != "short":
+                self._game_client.select_conclusion_cliffs_chapter("short")
 
     # TODO: we keep this function for now to convert between enum and str
     def change_trap(self, classification: TrapClassifications, item_key: str):
