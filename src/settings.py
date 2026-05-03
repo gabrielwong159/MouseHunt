@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
 
+    mousehunt_webhook_url: str = ""
+    mousehunt_webhook_secret: str = ""
+
     def get_keywords(self) -> list[str]:
         pattern = r",\s*"
         return re.split(pattern, self.mh_keywords)

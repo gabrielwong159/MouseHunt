@@ -1,5 +1,7 @@
 import logging
+import uuid
 from io import BytesIO
+from typing import Optional
 
 from PIL import Image
 from bs4 import BeautifulSoup
@@ -7,6 +9,7 @@ from requests import Response
 
 from src.clients.captcha import CaptchaClient
 from src.clients.game import GameClient
+from src.clients.webhook import WebhookClient
 from src.settings import Settings
 
 logging.basicConfig(
@@ -31,6 +34,19 @@ class Bot(object):
         self.trap_check = settings.mh_trap_check
         self.keywords = settings.get_keywords()
 
+        self._webhook_client: Optional[WebhookClient]
+        if settings.mousehunt_webhook_url and settings.mousehunt_webhook_secret:
+            self._webhook_client = WebhookClient(
+                url=settings.mousehunt_webhook_url,
+                secret=settings.mousehunt_webhook_secret,
+            )
+        else:
+            self._webhook_client = None
+            self.logger.warning(
+                "MOUSEHUNT_WEBHOOK_URL or MOUSEHUNT_WEBHOOK_SECRET unset; "
+                "skipping post-horn webhook"
+            )
+
         user_data = self.get_user_data()
         self.name = user_data["username"]
         self.unique_hash = user_data["unique_hash"]
@@ -48,6 +64,8 @@ class Bot(object):
 
     def horn(self):
         self._game_client.horn()
+        if self._webhook_client is not None:
+            self._webhook_client.notify_horn(event_id=f"horn-{uuid.uuid4()}")
 
     def get_page_soup(self) -> BeautifulSoup:
         home_url = Bot.base_url
