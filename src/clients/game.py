@@ -24,6 +24,7 @@ class GameClient:
     _MOUNTAIN_URL = f"{_BASE_URL}/managers/ajax/environment/mountain.php"
     _AFTERWORD_ACRES_URL = f"{_BASE_URL}/managers/ajax/environment/afterword_acres.php"
     _CONCLUSION_CLIFFS_URL = f"{_BASE_URL}/managers/ajax/environment/conclusion_cliffs.php"
+    _EPILOGUE_FALLS_URL = f"{_BASE_URL}/managers/ajax/environment/epilogue_falls.php"
     _CAVERN_URL = f"{_BASE_URL}/managers/ajax/environment/draconic_depths.php"
     _SB_FACTORY_URL = f"{_BASE_URL}/managers/ajax/events/birthday_factory.php"
     _HALLOWEEN_URL = f"{_BASE_URL}/managers/ajax/events/halloween_boiling_cauldron.php"
@@ -200,6 +201,20 @@ class GameClient:
         response = self._session.post(
             self._ADVENT_CALENDAR_URL,
             data={"action": "claim", "gift": gift, "uh": self._unique_hash},
+        )
+        response.raise_for_status()
+
+    def craft_epilogue_falls_barrel(self, barrel_type: str) -> None:
+        if barrel_type not in ("simple_barrel", "sturdy_barrel", "robust_barrel"):
+            raise ValueError(f"Invalid {barrel_type=}")
+        response = self._session.post(
+            self._EPILOGUE_FALLS_URL,
+            data={
+                "action": "craft_barrel",
+                "barrel_type": barrel_type,
+                "bait_disarm_preference": "disarm",
+                "uh": self._unique_hash,
+            },
         )
         response.raise_for_status()
 
