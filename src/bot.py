@@ -55,6 +55,9 @@ class Bot(object):
         self.journal_entries: list[str] = []
         self.update_journal_entries()
 
+        if self._webhook_client is not None:
+            self._webhook_client.notify_horn(event_id=f"startup-{uuid.uuid4()}")
+
     def refresh(self) -> None:
         self._game_client.refresh()
 
@@ -66,6 +69,11 @@ class Bot(object):
         self._game_client.horn()
         if self._webhook_client is not None:
             self._webhook_client.notify_horn(event_id=f"horn-{uuid.uuid4()}")
+
+    def post_trap_check(self):
+        self.update_journal_entries()
+        if self._webhook_client is not None:
+            self._webhook_client.notify_horn(event_id=f"trap-{uuid.uuid4()}")
 
     def get_page_soup(self) -> BeautifulSoup:
         home_url = Bot.base_url

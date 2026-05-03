@@ -52,7 +52,7 @@ async def trap_check_loop(bot: Bot):
 
     curr_min = datetime.now().minute
     if curr_min == bot.trap_check:
-        bot.update_journal_entries()
+        bot.post_trap_check()
 
     if curr_min >= bot.trap_check:
         next_check_hour = datetime.now() + timedelta(hours=1)
