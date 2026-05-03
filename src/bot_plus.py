@@ -544,6 +544,18 @@ class BotPlus(Bot):
                 self.change_trap(TrapClassifications.BAIT, "metaphor_manchego_cheese")
             return
 
+        if quest["story"]["is_postscript"]:
+            hunts_remaining = quest["story"]["postscript_hunts_remaining"]
+            hunts_total = 10 if quest["story"]["can_add_postscript_hunts"] else 13
+            # alert on the first two, because the bot can miss the first one,
+            # such as after a trap check
+            if hunts_remaining >= hunts_total - 1:
+                self._send_telegram_message(
+                    "Conclusion Cliffs: postscript "
+                    f"{hunts_remaining}/{hunts_total} hunts remaining"
+                )
+            return
+
         if quest["story"]["is_last_chapter"]:
             return
 
