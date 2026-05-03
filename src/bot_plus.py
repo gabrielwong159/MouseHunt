@@ -538,6 +538,12 @@ class BotPlus(Bot):
             return
 
         quest = user_data["quests"]["QuestConclusionCliffs"]
+
+        if not quest["story"]["is_writing"]:
+            if user_data["bait_quantity"] > 0:
+                self.change_trap(TrapClassifications.BAIT, "metaphor_manchego_cheese")
+            return
+
         if quest["story"]["is_last_chapter"]:
             return
 
