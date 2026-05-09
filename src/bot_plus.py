@@ -598,7 +598,11 @@ class BotPlus(Bot):
             classification_type=TrapClassifications.TRINKET.value,
             item_key=trinket_key,
         ):
-            self._game_client.purchase_item(trinket_key, 1)
+            if not self._game_client.purchase_item(trinket_key, 1):
+                self._send_telegram_message(
+                    f"{self.name}\nTrinket purchase failed: {trinket_key}"
+                )
+                return
         self.change_trap(TrapClassifications.TRINKET, trinket_key)
 
     def get_location(self, user_data: dict) -> str:

@@ -76,7 +76,7 @@ class GameClient:
     def disarm_trinket(self) -> None:
         self.change_trap("trinket", "disarm")
 
-    def purchase_item(self, item_key: str, quantity: int) -> None:
+    def purchase_item(self, item_key: str, quantity: int) -> bool:
         response = self._session.post(
             self._PURCHASE_ITEM_URL,
             data={
@@ -88,8 +88,9 @@ class GameClient:
             },
         )
         response.raise_for_status()
-        data = response.json()["user"]
-        self._user_data = UserData.model_validate(data)
+        data = response.json()
+        self._user_data = UserData.model_validate(data["user"])
+        return data.get("buy") == 1 and data.get("success") == 1
 
     def try_craft_item(self, crafting_items: dict, quantity: int) -> bool:
         response = self._session.post(
