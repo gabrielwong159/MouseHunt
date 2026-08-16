@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 import cloudscraper  # type: ignore
@@ -8,6 +9,12 @@ from requests.exceptions import JSONDecodeError
 from src.clients.captcha import CaptchaClient
 from src.models.game import AfterwordAcresData, DraconicDepthsData, UserData
 from src.settings import Settings
+
+
+class ShipmentType(Enum):
+    GAS = "gas_shipment"
+    CLOUDSTONE = "cloudstone_shipment"
+    SPICE = "spice_shipment"
 
 
 class GameClient:
@@ -224,14 +231,12 @@ class GameClient:
         )
         response.raise_for_status()
 
-    # TODO: validate `shipment_type` once all four types are known. So far:
-    # `gas_shipment`, `cloudstone_shipment`, `spice_shipment`
-    def start_cerulean_skyport_shipment(self, shipment_type: str) -> None:
+    def start_cerulean_skyport_shipment(self, shipment_type: ShipmentType) -> None:
         response = self._session.post(
             self._CERULEAN_SKYPORT_URL,
             data={
                 "action": "start_shipment",
-                "shipment_type": shipment_type,
+                "shipment_type": shipment_type.value,
                 "bait": "sky_pirate_cheese",
                 "bait_disarm_preference": "disarm",
                 "uh": self._unique_hash,
