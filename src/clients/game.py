@@ -241,6 +241,31 @@ class GameClient:
         data = response.json()["user"]
         self._user_data = UserData.model_validate(data)
 
+    def start_raid(self, location_type: str) -> None:
+        response = self._session.post(
+            self._CERULEAN_SKYPORT_URL,
+            data={
+                "action": "start_raid",
+                "location_type": location_type,
+                "bait": "aurora_bocconcini_cheese",
+                "enable_fuel": "true",
+                "bait_disarm_preference": "disarm",
+                "uh": self._unique_hash,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
+
+    def toggle_raid_buster(self) -> None:
+        response = self._session.post(
+            self._CERULEAN_SKYPORT_URL,
+            data={"action": "toggle_fuel", "uh": self._unique_hash},
+        )
+        response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
+
     def select_conclusion_cliffs_chapter(self, length_type: str) -> None:
         if length_type not in ("short", "medium", "long"):
             raise ValueError(f"Invalid {length_type=}")
