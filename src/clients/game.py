@@ -23,8 +23,13 @@ class GameClient:
     _VRIFT_URL = f"{_BASE_URL}/managers/ajax/environment/rift_valour.php"
     _MOUNTAIN_URL = f"{_BASE_URL}/managers/ajax/environment/mountain.php"
     _AFTERWORD_ACRES_URL = f"{_BASE_URL}/managers/ajax/environment/afterword_acres.php"
-    _CONCLUSION_CLIFFS_URL = f"{_BASE_URL}/managers/ajax/environment/conclusion_cliffs.php"
+    _CONCLUSION_CLIFFS_URL = (
+        f"{_BASE_URL}/managers/ajax/environment/conclusion_cliffs.php"
+    )
     _EPILOGUE_FALLS_URL = f"{_BASE_URL}/managers/ajax/environment/epilogue_falls.php"
+    _CERULEAN_SKYPORT_URL = (
+        f"{_BASE_URL}/managers/ajax/environment/cerulean_skyport.php"
+    )
     _CAVERN_URL = f"{_BASE_URL}/managers/ajax/environment/draconic_depths.php"
     _SB_FACTORY_URL = f"{_BASE_URL}/managers/ajax/events/birthday_factory.php"
     _HALLOWEEN_URL = f"{_BASE_URL}/managers/ajax/events/halloween_boiling_cauldron.php"
@@ -218,6 +223,48 @@ class GameClient:
             },
         )
         response.raise_for_status()
+
+    # TODO: validate `shipment_type` once all four types are known. So far:
+    # `gas_shipment`, `cloudstone_shipment`, `spice_shipment`
+    def start_cerulean_skyport_shipment(self, shipment_type: str) -> None:
+        response = self._session.post(
+            self._CERULEAN_SKYPORT_URL,
+            data={
+                "action": "start_shipment",
+                "shipment_type": shipment_type,
+                "bait": "sky_pirate_cheese",
+                "bait_disarm_preference": "disarm",
+                "uh": self._unique_hash,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
+
+    def start_raid(self, location_type: str) -> None:
+        response = self._session.post(
+            self._CERULEAN_SKYPORT_URL,
+            data={
+                "action": "start_raid",
+                "location_type": location_type,
+                "bait": "aurora_bocconcini_cheese",
+                "enable_fuel": "true",
+                "bait_disarm_preference": "disarm",
+                "uh": self._unique_hash,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
+
+    def toggle_raid_buster(self) -> None:
+        response = self._session.post(
+            self._CERULEAN_SKYPORT_URL,
+            data={"action": "toggle_fuel", "uh": self._unique_hash},
+        )
+        response.raise_for_status()
+        data = response.json()["user"]
+        self._user_data = UserData.model_validate(data)
 
     def select_conclusion_cliffs_chapter(self, length_type: str) -> None:
         if length_type not in ("short", "medium", "long"):
