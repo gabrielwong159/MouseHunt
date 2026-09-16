@@ -48,25 +48,28 @@ async def horn_loop(bot: Bot):
 
 
 async def trap_check_loop(bot: Bot):
-    bot.refresh()
+    while True:
+        next_check_dt = get_next_trap_check_dt(bot.trap_check)
+        bot.logger.info(
+            f'time of next trap check: {next_check_dt.strftime("%Y-%m-%d %T")}'
+        )
+        await asyncio.sleep((next_check_dt - datetime.now()).total_seconds())
 
-    curr_min = datetime.now().minute
-    if curr_min == bot.trap_check:
+        bot.refresh()
         bot.post_trap_check()
 
-    if curr_min >= bot.trap_check:
-        next_check_hour = datetime.now() + timedelta(hours=1)
-    else:
-        next_check_hour = datetime.now()
 
+def get_next_trap_check_dt(trap_check_min: int) -> datetime:
+    # Fire just after the minute starts, so the game has processed the check by
+    # the time we notify.
     arbitrary_buffer = 5
-    next_check_dt = next_check_hour.replace(
-        minute=bot.trap_check, second=arbitrary_buffer, microsecond=0
+    now = datetime.now()
+    next_check_dt = now.replace(
+        minute=trap_check_min, second=arbitrary_buffer, microsecond=0
     )
-    bot.logger.info(f'time of next trap check: {next_check_dt.strftime("%Y-%m-%d %T")}')
-
-    secs_to_next_check = (next_check_dt - datetime.now()).total_seconds()
-    await asyncio.sleep(secs_to_next_check)
+    if next_check_dt <= now:
+        next_check_dt += timedelta(hours=1)
+    return next_check_dt
 
 
 if __name__ == "__main__":
