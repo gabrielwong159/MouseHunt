@@ -71,9 +71,11 @@ class Bot(object):
             self._webhook_client.notify_horn(event_id=f"horn-{uuid.uuid4()}")
 
     def post_trap_check(self):
-        self.update_journal_entries()
+        # Notify first: the webhook marks the trap check itself, and shouldn't be
+        # held up (or suppressed on failure) by the journal update behind it.
         if self._webhook_client is not None:
             self._webhook_client.notify_horn(event_id=f"trap-{uuid.uuid4()}")
+        self.update_journal_entries()
 
     def get_page_soup(self) -> BeautifulSoup:
         home_url = Bot.base_url
