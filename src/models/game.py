@@ -18,6 +18,7 @@ class UserData(BaseModel):
     environment_name: str
     trap_power_type_name: str
     next_activeturn_seconds: int
+    num_active_turns: int
     has_puzzle: bool
     quests: dict
     environment_atts: dict = Field(alias="enviroment_atts")

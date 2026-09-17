@@ -33,6 +33,8 @@ async def horn_loop(bot: Bot):
         bot.refresh()
         secs_to_next_hunt = bot.get_user_data()["next_activeturn_seconds"]
         if secs_to_next_hunt > 0:
+            # Something hunted without us; the horn branch notifies for itself.
+            bot.notify_missed_hunts()
             arbitrary_delay = 5
             total_delay = secs_to_next_hunt + arbitrary_delay
         else:
