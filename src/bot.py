@@ -52,10 +52,6 @@ class Bot(object):
         self.unique_hash = user_data["unique_hash"]
         self.user_id = user_data["user_id"]
 
-        # Hunts the game has recorded for us as of the last event we sent. Any
-        # advance past this is a hunt no notification accounted for.
-        self._notified_active_turns: int = user_data["num_active_turns"]
-
         self.journal_entries: list[str] = []
         self.update_journal_entries()
 
@@ -75,42 +71,23 @@ class Bot(object):
     def horn(self):
         self._game_client.horn()
         self._notify(event_id=f"horn-{uuid.uuid4()}")
-        self._sync_active_turns()
 
     def post_trap_check(self):
         # Notify first: the webhook marks the trap check itself, and shouldn't be
         # held up (or suppressed on failure) by the journal update behind it.
         self._notify(event_id=f"trap-{uuid.uuid4()}")
-        self._sync_active_turns()
         self.update_journal_entries()
 
-    def notify_missed_hunts(self) -> None:
-        """Notify for hunts neither horn() nor post_trap_check() accounted for.
+    def notify_hunt(self) -> None:
+        """Notify for a hunt this bot did not perform.
 
-        The game checks the trap on its own schedule, and hunts also come from
-        the browser and app, so a hunt lands without the bot causing one. Those
-        reach the journal but nothing tells the webhook, so compare the game's
-        hunt counter against the last one we sent an event for.
-
-        Reads the counter the caller last fetched rather than refreshing, so
-        the decision uses the same state the caller acted on.
+        Any hunt resets next_activeturn_seconds, so seconds remaining on a
+        pass where a hunt was due mean a hunt already happened: the game's
+        own trap check, another session, or a friend sounding the horn.
+        Notify on every such pass, because num_active_turns does not count a
+        friend's horn.
         """
-        current = self._game_client._user_data.num_active_turns
-        missed = current - self._notified_active_turns
-        if missed <= 0:
-            return
-
-        self.logger.info("%d hunt(s) since the last notification", missed)
-        # One event for the whole gap: the receiver re-reads full game state, so
-        # a run per missed hunt would repeat the same work.
-        self._notify(event_id=f"hunt-{current}")
-        self._notified_active_turns = current
-
-    def _sync_active_turns(self) -> None:
-        # Re-read after a hunt we notified for, so notify_missed_hunts does not
-        # report it a second time.
-        self._game_client.refresh_user_data()
-        self._notified_active_turns = self._game_client._user_data.num_active_turns
+        self._notify(event_id=f"hunt-{uuid.uuid4()}")
 
     def get_page_soup(self) -> BeautifulSoup:
         home_url = Bot.base_url
